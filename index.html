@@ -3,41 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="title">Калькулятор рассрочки</title>
+<title>Калькулятор лизинга</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
-body{background:#f4f6fb;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:flex-start}
-.container{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:40px;max-width:1200px;width:100%}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
+body{background:#f4f6fb;padding:20px}
+.container{max-width:1200px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:35px}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
-.lang-switch span{cursor:pointer;font-weight:600;margin-left:12px;color:#667eea}
-.lang-switch span.active{text-decoration:underline}
-h1{font-size:30px;color:#2c3e50}
-.calculator-section{display:flex;flex-wrap:wrap;gap:40px}
-.input-section{flex:1;min-width:350px;padding:25px;background:#f8f9fa;border-radius:15px}
-.output-section{flex:2;min-width:500px}
-.input-group{margin-bottom:20px}
-label{display:block;margin-bottom:8px;font-weight:600;font-size:14px;color:#495057}
-.currency-input,.percentage-input{position:relative}
-.currency-input input,.percentage-input input,input[type=number],select{width:100%;padding:12px 15px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px}
-.currency-input input{padding-left:45px}
-.percentage-input input{padding-right:45px}
-.currency-symbol{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-weight:bold}
-.percentage-symbol{position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:bold}
-.calculate-btn{width:100%;padding:16px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;font-size:18px;font-weight:600;cursor:pointer}
+h1{font-size:28px;color:#2c3e50}
 
-.summary-section{background:#fff;border-radius:15px;padding:25px;margin-bottom:30px}
-.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.summary-item{text-align:center;padding:24px;background:#f8f9fa;border-radius:14px}
-.summary-label{font-size:14px;color:#6c757d;margin-bottom:10px}
-.summary-value{font-size:26px;font-weight:700;color:#2c3e50}
+button{padding:12px 18px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;background:#667eea;color:#fff}
 
-.results-container{background:#fff;border-radius:15px;padding:25px}
-.schedule-container{max-height:420px;overflow:auto;border:2px solid #e9ecef;border-radius:10px}
+.top-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:18px;
+margin-bottom:30px
+}
+.card{
+background:#f8f9fa;
+border-radius:14px;
+padding:22px;
+text-align:center
+}
+.card-title{font-size:14px;color:#6c757d;margin-bottom:8px}
+.card-value{font-size:26px;font-weight:700;color:#2c3e50}
+
 table{width:100%;border-collapse:collapse;font-size:14px}
-thead{position:sticky;top:0;background:#2c3e50;color:#fff}
-th,td{padding:10px;text-align:center}
+thead{background:#2c3e50;color:#fff}
+th,td{padding:10px;text-align:center;border-bottom:1px solid #e5e5e5}
 tbody tr:nth-child(even){background:#fafafa}
+
+/* ===== РЕЖИМ СКРИНШОТА ===== */
+.screenshot body{background:#fff}
+.screenshot .container{box-shadow:none}
+.screenshot .hide-screenshot{display:none}
 </style>
 </head>
 
@@ -45,100 +45,41 @@ tbody tr:nth-child(even){background:#fafafa}
 <div class="container">
 
 <div class="header">
-<h1 data-i18n="title">Калькулятор рассрочки</h1>
-<div class="lang-switch">
-<span data-lang="ru">RU</span>
-<span data-lang="uz">UZ</span>
-<span data-lang="en">ENG</span>
+<h1>Расчёт лизинга</h1>
+<button onclick="toggleScreenshot()">Режим скриншота</button>
+</div>
+
+<div class="top-grid">
+<div class="card">
+<div class="card-title">Сумма лизинга</div>
+<div class="card-value" id="leaseSum">0</div>
+</div>
+<div class="card">
+<div class="card-title">Аванс</div>
+<div class="card-value" id="advanceSum">0</div>
+</div>
+<div class="card">
+<div class="card-title">Общие проценты</div>
+<div class="card-value" id="totalInterest">0</div>
+</div>
+<div class="card">
+<div class="card-title">Единовременная маржа</div>
+<div class="card-value" id="marginSum">0</div>
 </div>
 </div>
 
-<div class="calculator-section">
-<div class="input-section">
-
-<div class="input-group">
-<label data-i18n="price">Стоимость имущества</label>
-<div class="currency-input">
-<span class="currency-symbol">UZS</span>
-<input type="text" id="price" value="265 000 000">
-</div>
-</div>
-
-<div class="input-group">
-<label data-i18n="advance">Аванс (%)</label>
-<div class="percentage-input">
-<input type="text" id="advance" value="30">
-<span class="percentage-symbol">%</span>
-</div>
-</div>
-
-<div class="input-group">
-<label data-i18n="term">Срок (мес.)</label>
-<input type="number" id="term" value="36" min="1">
-</div>
-
-<div class="input-group">
-<label data-i18n="extra">Доп. платёж</label>
-<div class="currency-input">
-<span class="currency-symbol">UZS</span>
-<input type="text" id="extra" value="0">
-</div>
-</div>
-
-<div class="input-group">
-<label data-i18n="type">Тип графика</label>
-<select id="type">
-<option value="annuity" data-i18n="t_annuity">Аннуитет</option>
-<option value="decl2" data-i18n="t_decl2">Убывающий 2x</option>
-<option value="decl3" data-i18n="t_decl3">Убывающий 3x</option>
-<option value="linear_q" data-i18n="t_linear">Линейный (квартальный)</option>
-<option value="inst_m" data-i18n="t_inst_m">Рассрочка ежемесячная</option>
-<option value="inst_q" data-i18n="t_inst_q">Рассрочка квартальная</option>
-</select>
-</div>
-
-<button class="calculate-btn" onclick="build()" data-i18n="calc">Рассчитать</button>
-
-</div>
-
-<div class="output-section">
-
-<div class="summary-section">
-<div class="summary-grid">
-<div class="summary-item">
-  <div class="summary-label" data-i18n="lease">Сумма лизинга</div>
-  <div class="summary-value" id="outLease">0</div>
-</div>
-<div class="summary-item">
-  <div class="summary-label" data-i18n="adv">Аванс</div>
-  <div class="summary-value" id="outAdvance">0</div>
-</div>
-<div class="summary-item">
-  <div class="summary-label" data-i18n="margin">Единовременная маржа</div>
-  <div class="summary-value" id="outMargin">0</div>
-</div>
-</div>
-</div>
-
-<div class="results-container">
-<div class="schedule-container">
 <table>
 <thead>
 <tr>
-<th data-i18n="m">Мес</th>
-<th data-i18n="p">Платёж</th>
-<th data-i18n="pr">Тело</th>
-<th data-i18n="i">%</th>
-<th data-i18n="b">Остаток</th>
+<th>Месяц</th>
+<th>Платёж</th>
+<th>В погашение долга</th>
+<th>В погашение %</th>
+<th>Остаток долга</th>
 </tr>
 </thead>
-<tbody id="tbl"></tbody>
+<tbody id="schedule"></tbody>
 </table>
-</div>
-</div>
-
-</div>
-</div>
 
 </div>
 
@@ -147,76 +88,63 @@ const REG = 876736;
 const RATE = 0.2975/12;
 const MARGIN_RATE = 0.03;
 
-const i18n={
-ru:{title:"Калькулятор рассрочки",price:"Стоимость объекта",advance:"Аванс (%)",term:"Срок (мес.)",extra:"Доп. платёж",
-type:"Тип графика",calc:"Рассчитать",lease:"Сумма лизинга",adv:"Аванс",margin:"Единовременная маржа",
-m:"Мес",p:"Платёж",pr:"Тело",i:"%",b:"Остаток",
-t_annuity:"Аннуитет",t_decl2:"Убывающий 2x",t_decl3:"Убывающий 3x",t_linear:"Линейный (квартальный)",
-t_inst_m:"Рассрочка ежемесячная",t_inst_q:"Рассрочка квартальная"},
-en:{title:"Installment Calculator",price:"Asset price",advance:"Advance (%)",term:"Term (months)",extra:"Additional payment",
-type:"Schedule type",calc:"Calculate",lease:"Lease amount",adv:"Advance",margin:"One-time margin",
-m:"Month",p:"Payment",pr:"Principal",i:"Interest",b:"Balance",
-t_annuity:"Annuity",t_decl2:"Declining 2x",t_decl3:"Declining 3x",t_linear:"Quarterly linear",
-t_inst_m:"Monthly installment",t_inst_q:"Quarterly installment"},
-uz:{title:"Bo‘lib to‘lash kalkulyatori",price:"Mol-mulk qiymati",advance:"Boshlang‘ich to‘lov (%)",term:"Muddati (oy)",
-extra:"Qo‘shimcha to‘lov",type:"To‘lov jadvali",calc:"Hisoblash",lease:"Lizing summasi",
-adv:"Boshlang‘ich to‘lov",margin:"Bir martalik marja",
-m:"Oy",p:"To‘lov",pr:"Asosiy qarz",i:"Foiz",b:"Qoldiq",
-t_annuity:"Annuitet",t_decl2:"Kamayuvchi 2x",t_decl3:"Kamayuvchi 3x",
-t_linear:"Chiziqli (choraklik)",t_inst_m:"Oylik bo‘lib to‘lash",t_inst_q:"Choraklik bo‘lib to‘lash"}
-};
+const price = 307000000;
+const advancePct = 0.25;
+const term = 36;
 
-function setLang(l){
-document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=i18n[l][e.dataset.i18n]);
-document.querySelectorAll('.lang-switch span').forEach(s=>s.classList.toggle('active',s.dataset.lang===l));
-localStorage.setItem('lang',l);
+function f(x){
+x=Math.round(x*100)/100;
+let p=x.toString().split('.');
+p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+return p.length===1?p[0]+'.00':p[1].length===1?p[0]+'.'+p[1]+'0':p.join('.');
 }
-setLang(localStorage.getItem('lang')||'ru');
-document.querySelectorAll('.lang-switch span').forEach(s=>s.onclick=()=>setLang(s.dataset.lang));
-
-function n(v){return parseFloat(String(v).replace(/\s|\u00A0/g,'').replace(',','.'))||0}
-function f(x){x=Math.round(x*100)/100;let p=x.toString().split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');return p.length===1?p[0]+'.00':p[1].length===1?p[0]+'.'+p[1]+'0':p.join('.')}
 
 function annuity(a,r,t){
 let res=[],bal=a,pay=a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
-for(let i=1;i<=t;i++){let intr=bal*r,pr=Math.min(bal,pay-intr);bal-=pr;res.push([i,pay,pr,intr,Math.max(0,bal)])}
+for(let i=1;i<=t;i++){
+let intr=bal*r;
+let pr=Math.min(bal,pay-intr);
+bal-=pr;
+res.push({m:i,p:pay,pr:pr,intr:intr,bal:Math.max(0,bal)});
+}
 return res;
 }
 
 function build(){
-let P=n(price.value),A=n(advance.value)/100,T=+term.value,E=n(extra.value);
-let total=P+REG;
-let adv=total*A;
-let lease=total-adv;
-let margin=total*MARGIN_RATE;
+const total = price + REG;
+const advance = total * advancePct;
+const lease = total - advance;
+const margin = total * MARGIN_RATE;
 
-let sch=annuity(lease,RATE,T);
+const sch = annuity(lease,RATE,term);
 
-let tblEl=document.getElementById("tbl");
-tblEl.innerHTML="";
+let interestSum = 0;
+schedule.innerHTML = "";
+
 sch.forEach(r=>{
-tblEl.innerHTML+=`<tr>
-<td>${r[0]}</td>
-<td>${f(r[1]+E)}</td>
-<td>${f(r[2])}</td>
-<td>${f(r[3])}</td>
-<td>${f(r[4])}</td>
+interestSum += r.intr;
+schedule.innerHTML += `
+<tr>
+<td>${r.m}</td>
+<td>${f(r.p)}</td>
+<td>${f(r.pr)}</td>
+<td>${f(r.intr)}</td>
+<td>${f(r.bal)}</td>
 </tr>`;
 });
 
-outLease.textContent=f(lease);
-outAdvance.textContent=f(adv);
-outMargin.textContent=f(margin);
+leaseSum.textContent = f(lease);
+advanceSum.textContent = f(advance);
+totalInterest.textContent = f(interestSum);
+marginSum.textContent = f(margin);
 }
 
-document.querySelectorAll('.currency-input input').forEach(i=>{
-i.addEventListener('input',()=>{
-let v=n(i.value);
-if(v||i.value==='0') i.value=v.toLocaleString('ru-RU');
-});
-});
+function toggleScreenshot(){
+document.documentElement.classList.toggle('screenshot');
+}
 
 build();
 </script>
+
 </body>
 </html>

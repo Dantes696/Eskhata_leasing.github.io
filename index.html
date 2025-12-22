@@ -1,1064 +1,195 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор рассрочки</title>
-    <style>
-        /* ========== CSS СТИЛИ ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор рассрочки</title>
 
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            padding: 40px;
-            max-width: 1200px;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 32px;
-            font-weight: 700;
-        }
-
-        .calculator-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 40px;
-            margin-bottom: 20px;
-        }
-
-        .input-section {
-            flex: 1;
-            min-width: 350px;
-            padding: 25px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-
-        .output-section {
-            flex: 2;
-            min-width: 500px;
-        }
-
-        .input-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #495057;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .currency-input, .percentage-input {
-            position: relative;
-        }
-
-        .currency-input input, .percentage-input input, input[type="number"], select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .currency-input input {
-            padding-left: 45px;
-        }
-
-        .percentage-input input {
-            padding-right: 45px;
-        }
-
-        .currency-symbol {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .percentage-symbol {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .calculate-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-top: 10px;
-        }
-
-        .calculate-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .calculate-btn:active {
-            transform: translateY(0);
-        }
-
-        .summary-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-        }
-
-        .summary-section h2 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .summary-item {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            transition: transform 0.3s;
-        }
-
-        .summary-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .summary-label {
-            color: #6c757d;
-            font-size: 14px;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .summary-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        .summary-value.uzs::after {
-            content: " UZS";
-            font-size: 0.7em;
-            color: #6c757d;
-        }
-
-        .summary-value.percent::after {
-            content: "%";
-            font-size: 0.7em;
-            color: #6c757d;
-        }
-
-        .results-container {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
-
-        .results-container h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
-
-        .schedule-container {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
-        thead {
-            position: sticky;
-            top: 0;
-            background: #2c3e50;
-            color: white;
-        }
-
-        th {
-            padding: 15px 12px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        td {
-            padding: 12px 10px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-            font-family: 'Courier New', monospace;
-        }
-
-        tbody tr:hover {
-            background: #f8f9fa;
-        }
-
-        tbody tr:nth-child(even) {
-            background: #fcfcfc;
-        }
-
-        .loader {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loader.active {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .warning {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .calculator-section {
-                flex-direction: column;
-            }
-            
-            .input-section, .output-section {
-                min-width: 100%;
-            }
-            
-            .summary-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-    </style>
+<style>
+/* ====== ВИЗУАЛ НЕ ТРОГАЛ ====== */
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif}
+body{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;padding:20px}
+.container{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:40px;max-width:1200px;margin:auto}
+h1{text-align:center;margin-bottom:30px}
+.calculator-section{display:flex;gap:40px;flex-wrap:wrap}
+.input-section{flex:1;min-width:350px;background:#f8f9fa;padding:25px;border-radius:15px}
+.output-section{flex:2;min-width:500px}
+.input-group{margin-bottom:20px}
+label{font-weight:600;margin-bottom:6px;display:block}
+input,select{width:100%;padding:12px;border-radius:8px;border:2px solid #e0e0e0;font-size:16px}
+.calculate-btn{width:100%;padding:16px;font-size:18px;border-radius:10px;border:none;color:#fff;background:linear-gradient(135deg,#667eea,#764ba2);cursor:pointer}
+.summary-section{background:#fff;padding:25px;border-radius:15px;margin-bottom:25px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.summary-item{text-align:center;background:#f8f9fa;padding:15px;border-radius:10px}
+.summary-value{font-size:22px;font-weight:700}
+.results-container{background:#fff;padding:25px;border-radius:15px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:center;padding:10px;border-bottom:1px solid #eee}
+thead{background:#2c3e50;color:#fff;position:sticky;top:0}
+.schedule-container{max-height:420px;overflow:auto}
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Калькулятор рассрочки</h1>
-        
-        <div class="calculator-section">
-            <div class="input-section">
-                <div class="input-group">
-                    <label>Стоимость имущества (UZS)</label>
-                    <div class="currency-input">
-                        <span class="currency-symbol">UZS</span>
-                        <input type="text" id="totalPrice" placeholder="Введите цену актива" value="265 000 000">
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Авансовый платеж (%)</label>
-                    <div class="percentage-input">
-                        <input type="text" id="advancePercent" placeholder="Введите авансовый платеж" value="30">
-                        <span class="percentage-symbol">%</span>
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Скрытая скидка (UZS)</label>
-                    <div class="currency-input">
-                        <span class="currency-symbol">UZS</span>
-                        <input type="text" id="discount" placeholder="Введите скрытую скидку" value="0">
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Срок лизинга (месяцев)</label>
-                    <input type="number" id="term" placeholder="Введите срок" value="36" min="1" max="120">
-                </div>
-                
-                <div class="input-group">
-                    <label>Дополнительный ежемесячный платеж (UZS)</label>
-                    <div class="currency-input">
-                        <span class="currency-symbol">UZS</span>
-                        <input type="text" id="extraPayment" placeholder="Введите дополнительный платеж" value="0">
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label>Тип графика платежей</label>
-                    <select id="paymentType">
-                        <option value="annuity" selected>Аннуитет (Лизинг/Финаренда)</option>
-                        <option value="linear">Линейный</option>
-                        <option value="declining2x">Убывающий 2x</option>
-                        <option value="declining3x">Убывающий 3x</option>
-                        <option value="quarterly_annuity">Ежеквартальный аннуитет</option>
-                        <option value="quarterly_linear">Ежеквартальный линейный</option>
-                        <option value="installment_monthly">Рассрочка ежемесячная</option>
-                        <option value="installment_quarterly">Рассрочка квартальная</option>
-                    </select>
-                </div>
-                
-                <button class="calculate-btn" id="calculateBtn">Рассчитать рассрочку</button>
-                
-                <div class="loader" id="loader">
-                    <div class="spinner"></div>
-                    <p>Идет расчет...</p>
-                </div>
-            </div>
-            
-            <div class="output-section">
-                <div class="summary-section">
-                    <h2>Результаты расчета</h2>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <div class="summary-label">Сумма лизинга</div>
-                            <div class="summary-value uzs" id="leasingAmount">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Аванс</div>
-                            <div class="summary-value uzs" id="advanceAmount">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Общая переплата</div>
-                            <div class="summary-value uzs" id="totalOverpayment">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Месячный платеж</div>
-                            <div class="summary-value uzs" id="monthlyPayment">0</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="results-container">
-                    <h3>График платежей</h3>
-                    <div class="schedule-container">
-                        <table id="paymentSchedule">
-                            <thead>
-                                <tr>
-                                    <th>Месяц</th>
-                                    <th>Платеж (UZS)</th>
-                                    <th>Основной долг</th>
-                                    <th>Проценты</th>
-                                    <th>Остаток долга</th>
-                                </tr>
-                            </thead>
-                            <tbody id="scheduleBody">
-                                <tr><td colspan="5">Нажмите "Рассчитать рассрочку" для отображения графика</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="container">
+<h1>Калькулятор рассрочки</h1>
 
-    <script>
-        // ========== ТОЧНАЯ КОПИЯ ВАШЕГО VBA МАКРОСА ==========
-        
-        // Скрытые параметры (как в вашем VBA)
-        const HIDDEN_ADMIN_PARAMS = {
-            // Фиксированная ставка 29.75% годовых (как в строке VBA: annualFixed = 0.2975)
-            annualFixed: 0.2975,
-            
-            // Сумма регистрации (добавляется к стоимости объекта)
-            registrationFee: 876736,
-            
-            // Страховая ставка: 0.24% годовых
-            insuranceRate: 0.0024,
-            
-            // Маржа: 3% годовых
-            marginRate: 0.03
-        };
+<div class="calculator-section">
+<div class="input-section">
 
-        // ========== 1. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (ТОЧНО КАК В VBA) ==========
+<div class="input-group">
+<label>Стоимость имущества (UZS)</label>
+<input id="totalPrice" value="265000000">
+</div>
 
-        // NormalizePercent - точная копия VBA функции
-        function NormalizePercent(v) {
-            if (typeof v === 'number') {
-                if (v >= 0 && v < 1) return v;
-                if (v >= 1) return v / 100;
-            }
-            
-            let s = String(v);
-            s = s.replace(/%/g, '')
-                .replace(/ /g, '')
-                .replace(/\u00A0/g, '')  // Chr(160)
-                .replace(/,/g, '.')
-                .trim();
-            
-            if (s === '') return 0;
-            
-            if (!isNaN(parseFloat(s))) {
-                const nn = parseFloat(s);
-                return (nn >= 0 && nn < 1) ? nn : nn / 100;
-            } else {
-                return 0;
-            }
-        }
+<div class="input-group">
+<label>Аванс (%)</label>
+<input id="advancePercent" value="30">
+</div>
 
-        // ParseIfNumeric - точная копия VBA функции
-        function ParseIfNumeric(v) {
-            if (typeof v === 'number') return v;
-            
-            let s = String(v);
-            s = s.replace(/ /g, '')
-                .replace(/\u00A0/g, '')  // Chr(160)
-                .replace(/,/g, '.')
-                .trim();
-            
-            return !isNaN(parseFloat(s)) ? parseFloat(s) : 0;
-        }
+<div class="input-group">
+<label>Срок (мес)</label>
+<input id="term" type="number" value="36">
+</div>
 
-        // Форматирование чисел с пробелами
-        function formatNumber(num) {
-            const rounded = Math.round(num);
-            return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        }
+<div class="input-group">
+<label>Доп. платеж (UZS)</label>
+<input id="extraPayment" value="0">
+</div>
 
-        // Форматирование чисел с 2 знаками после запятой
-        function formatNumberWithDecimals(num) {
-            const rounded = Math.round(num * 100) / 100;
-            const parts = rounded.toString().split('.');
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-            
-            if (parts.length === 1) {
-                return parts[0] + '.00';
-            }
-            if (parts[1].length === 1) {
-                parts[1] = parts[1] + '0';
-            }
-            return parts.join('.');
-        }
+<div class="input-group">
+<label>Тип графика</label>
+<select id="paymentType">
+<option value="annuity">Аннуитет</option>
+<option value="linear">Линейный</option>
+<option value="declining2x">Убывающий 2x</option>
+<option value="declining3x">Убывающий 3x</option>
+<option value="installment_monthly">Рассрочка</option>
+</select>
+</div>
 
-        // ========== 2. ФУНКЦИИ РАСЧЕТА (ТОЧНЫЕ КОПИИ VBA) ==========
+<button class="calculate-btn" onclick="BuildSchedule()">Рассчитать</button>
 
-        // CalcAnnuity - точная копия VBA функции
-        function CalcAnnuity(amount, rate, term) {
-            if (term <= 0 || amount <= 0) return [];
-            
-            const schedule = [];
-            let bal = amount;
-            
-            if (Math.abs(rate) < 0.000000000001) {
-                const pay = amount / term;
-                for (let i = 1; i <= term; i++) {
-                    const intr = bal * rate;
-                    const princ = (i === term) ? bal : pay;
-                    bal -= princ;
-                    schedule.push({
-                        month: i,
-                        payment: princ + intr,
-                        principal: princ,
-                        interest: intr,
-                        balance: Math.max(0, bal)
-                    });
-                }
-            } else {
-                const base = 1 + rate;
-                if (base <= 0 || base > 1000000) {
-                    // fallback (как в VBA)
-                    const perPr = amount / term;
-                    bal = amount;
-                    for (let i = 1; i <= term; i++) {
-                        const intr = bal * rate;
-                        const princ = (i === term) ? bal : perPr;
-                        const pay = princ + intr;
-                        bal -= princ;
-                        if (bal < 0.000000001) bal = 0;
-                        schedule.push({
-                            month: i,
-                            payment: pay,
-                            principal: princ,
-                            interest: intr,
-                            balance: bal
-                        });
-                    }
-                    return schedule;
-                }
-                
-                const pv = Math.pow(base, term);
-                const denom = pv - 1;
-                if (Math.abs(denom) < 0.000000000000001) {
-                    // fallback
-                    const perPr = amount / term;
-                    bal = amount;
-                    for (let i = 1; i <= term; i++) {
-                        const intr = bal * rate;
-                        const princ = (i === term) ? bal : perPr;
-                        const pay = princ + intr;
-                        bal -= princ;
-                        if (bal < 0.000000001) bal = 0;
-                        schedule.push({
-                            month: i,
-                            payment: pay,
-                            principal: princ,
-                            interest: intr,
-                            balance: bal
-                        });
-                    }
-                    return schedule;
-                }
-                
-                const pay = amount * (rate * pv) / denom;
-                bal = amount;
-                
-                for (let i = 1; i <= term; i++) {
-                    const intr = bal * rate;
-                    let princ = pay - intr;
-                    if (princ < 0) princ = 0;
-                    if (princ > bal) princ = bal;
-                    bal -= princ;
-                    schedule.push({
-                        month: i,
-                        payment: pay,
-                        principal: princ,
-                        interest: intr,
-                        balance: Math.max(0, bal)
-                    });
-                }
-            }
-            return schedule;
-        }
+</div>
 
-        // CalcLinear - точная копия VBA функции
-        function CalcLinear(amount, rate, term) {
-            const schedule = [];
-            const princPer = amount / term;
-            let bal = amount;
-            
-            for (let i = 1; i <= term; i++) {
-                const intr = bal * rate;
-                const pr = (i === term) ? bal : princPer;
-                const pay = pr + intr;
-                bal = Math.max(0, bal - pr);
-                schedule.push({
-                    month: i,
-                    payment: pay,
-                    principal: pr,
-                    interest: intr,
-                    balance: bal
-                });
-            }
-            return schedule;
-        }
+<div class="output-section">
 
-        // CalcDeclining_2x3x - точная копия VBA функции
-        function CalcDeclining_2x3x(amount, rate, term, ratio) {
-            let annuity;
-            if (Math.abs(rate) < 0.000000000001) {
-                annuity = amount / term;
-            } else {
-                annuity = amount * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
-            }
-            
-            let firstPay = annuity * 1.5;
-            let lastPay = firstPay / ratio;
-            let dec = (term > 1) ? (firstPay - lastPay) / (term - 1) : 0;
-            
-            let bestFirst = firstPay;
-            let bestErr = amount;
-            
-            for (let iter = 1; iter <= 200; iter++) {
-                let testBal = amount;
-                let valid = true;
-                
-                for (let m = 1; m <= term; m++) {
-                    const cur = firstPay - (m - 1) * dec;
-                    const intr = testBal * rate;
-                    const prin = cur - intr;
-                    if (prin <= 0) {
-                        valid = false;
-                        break;
-                    }
-                    testBal -= prin;
-                }
-                
-                if (valid) {
-                    if (Math.abs(testBal) < Math.abs(bestErr)) {
-                        bestErr = testBal;
-                        bestFirst = firstPay;
-                    }
-                    if (Math.abs(testBal) < amount * 0.000001) break;
-                    firstPay *= (testBal > 0) ? 1.001 : 0.999;
-                } else {
-                    firstPay *= 1.001;
-                }
-                
-                lastPay = firstPay / ratio;
-                if (term > 1) dec = (firstPay - lastPay) / (term - 1);
-            }
-            
-            firstPay = bestFirst;
-            lastPay = firstPay / ratio;
-            if (term > 1) dec = (firstPay - lastPay) / (term - 1);
-            
-            const schedule = [];
-            let bal = amount;
-            
-            for (let m = 1; m <= term; m++) {
-                let pay = firstPay - (m - 1) * dec;
-                const intr = bal * rate;
-                let prin;
-                
-                if (m === term) {
-                    prin = bal;
-                    pay = prin + intr;
-                    bal = 0;
-                } else {
-                    prin = pay - intr;
-                    if (prin < 0) prin = 0;
-                    if (prin > bal) prin = bal;
-                    bal -= prin;
-                }
-                
-                schedule.push({
-                    month: m,
-                    payment: pay,
-                    principal: prin,
-                    interest: intr,
-                    balance: Math.max(0, bal)
-                });
-            }
-            
-            return schedule;
-        }
+<div class="summary-section">
+<div class="summary-grid">
+<div class="summary-item">
+<div>Сумма лизинга</div>
+<div class="summary-value" id="leasingAmount">0</div>
+</div>
+<div class="summary-item">
+<div>Аванс</div>
+<div class="summary-value" id="advanceAmount">0</div>
+</div>
+<div class="summary-item">
+<div>Переплата</div>
+<div class="summary-value" id="totalOverpayment">0</div>
+</div>
+</div>
+</div>
 
-        // CalcQuarterly_Annuity - точная копия VBA функции
-        function CalcQuarterly_Annuity(amount, rate, term) {
-            const monthly = CalcAnnuity(amount, rate, term);
-            const schedule = [];
-            
-            let accPay = 0, accPr = 0, accInt = 0;
-            let bal = amount;
-            
-            for (let i = 0; i < term; i++) {
-                const month = monthly[i];
-                accPay += month.payment;
-                accPr += month.principal;
-                accInt += month.interest;
-                bal -= month.principal;
-                if (bal < 0) bal = 0;
-                
-                const isQuarterEnd = ((i + 1) % 3 === 0) || (i + 1 === term);
-                
-                if (isQuarterEnd) {
-                    schedule.push({
-                        month: i + 1,
-                        payment: accPay,
-                        principal: accPr,
-                        interest: accInt,
-                        balance: bal
-                    });
-                    accPay = accPr = accInt = 0;
-                } else {
-                    schedule.push({
-                        month: i + 1,
-                        payment: null,
-                        principal: null,
-                        interest: month.interest,
-                        balance: bal
-                    });
-                }
-            }
-            return schedule;
-        }
+<div class="results-container">
+<div class="schedule-container">
+<table>
+<thead>
+<tr>
+<th>Мес</th>
+<th>Платеж</th>
+<th>Долг</th>
+<th>%</th>
+<th>Остаток</th>
+</tr>
+</thead>
+<tbody id="scheduleBody"></tbody>
+</table>
+</div>
+</div>
 
-        // CalcQuarterly_Linear - точная копия VBA функции
-        function CalcQuarterly_Linear(amount, rate, term) {
-            const schedule = [];
-            const quarters = Math.floor((term + 2) / 3);
-            const prQuarterRaw = amount / quarters;
-            let bal = amount;
-            
-            for (let i = 1; i <= term; i++) {
-                const monthInterest = bal * rate;
-                const isQuarterEnd = (i % 3 === 0) || (i === term);
-                
-                if (isQuarterEnd) {
-                    let pr;
-                    if (i === term) {
-                        pr = bal;
-                    } else {
-                        pr = prQuarterRaw;
-                    }
-                    
-                    const payment = pr + monthInterest * 3;
-                    bal -= pr;
-                    if (bal < 0) bal = 0;
-                    
-                    schedule.push({
-                        month: i,
-                        payment: payment,
-                        principal: pr,
-                        interest: monthInterest,
-                        balance: bal
-                    });
-                } else {
-                    schedule.push({
-                        month: i,
-                        payment: null,
-                        principal: null,
-                        interest: monthInterest,
-                        balance: bal
-                    });
-                }
-            }
-            return schedule;
-        }
+</div>
+</div>
+</div>
 
-        // CalcInstallment_Monthly - точная копия VBA функции
-        function CalcInstallment_Monthly(amount, term) {
-            const schedule = [];
-            const per = (term > 0) ? amount / term : 0;
-            let bal = amount;
-            
-            for (let i = 1; i <= term; i++) {
-                const principal = (i === term) ? bal : per;
-                bal -= principal;
-                if (bal < 0) bal = 0;
-                schedule.push({
-                    month: i,
-                    payment: principal,
-                    principal: principal,
-                    interest: 0,
-                    balance: bal
-                });
-            }
-            return schedule;
-        }
+<script>
+/* ===== СКРЫТЫЕ ПАРАМЕТРЫ ===== */
+const ADMIN = {
+  annualRate: 0.295,
+  insuranceRate: 0.0024,
+  marginRate: 0.03,
+  registrationFee: 876736
+};
 
-        // CalcInstallment_Quarterly - точная копия VBA функции
-        function CalcInstallment_Quarterly(amount, term) {
-            const monthly = CalcInstallment_Monthly(amount, term);
-            const schedule = [];
-            
-            let accPay = 0;
-            let balFact = amount;
-            let balShow = amount;
-            
-            for (let i = 0; i < term; i++) {
-                accPay += monthly[i].payment;
-                balFact -= monthly[i].payment;
-                if (balFact < 0) balFact = 0;
-                
-                const isQuarterEnd = ((i + 1) % 3 === 0) || (i + 1 === term);
-                
-                if (isQuarterEnd) {
-                    balShow = balFact;
-                    schedule.push({
-                        month: i + 1,
-                        payment: accPay,
-                        principal: accPay,
-                        interest: null,
-                        balance: balShow
-                    });
-                    accPay = 0;
-                } else {
-                    schedule.push({
-                        month: i + 1,
-                        payment: null,
-                        principal: null,
-                        interest: null,
-                        balance: null
-                    });
-                }
-            }
-            return schedule;
-        }
+/* ===== ВСПОМОГАТЕЛЬНЫЕ ===== */
+const num = v => parseFloat(String(v).replace(/\s/g,'').replace(',','.'))||0;
+const pct = v => { let n=num(v); return n>1?n/100:n };
+const r2 = v => Math.round(v*100)/100;
 
-        // ========== 3. ОСНОВНАЯ ЛОГИКА РАСЧЕТА (КАК В Build_Schedule) ==========
+/* ===== АННУИТЕТ ===== */
+function annuity(A,r,n){
+ let p=A*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1),b=A,res=[];
+ for(let i=1;i<=n;i++){
+  let iN=b*r,pr=p-iN;
+  if(i===n)pr=b;
+  b-=pr;if(b<1e-6)b=0;
+  res.push({m:i,p:r2(pr+iN),pr:r2(pr),i:r2(iN),b:r2(b)});
+ }
+ return res;
+}
 
-        function Build_Schedule() {
-            try {
-                // 1. Получаем значения как в VBA
-                const totalPrice = ParseIfNumeric(document.getElementById('totalPrice').value);
-                const advancePercent = NormalizePercent(document.getElementById('advancePercent').value);
-                const term = parseInt(document.getElementById('term').value);
-                const extraPayment = ParseIfNumeric(document.getElementById('extraPayment').value);
-                const paymentType = document.getElementById('paymentType').value;
-                
-                if (term <= 0) {
-                    alert('Срок указан неверно');
-                    return;
-                }
-                
-                // 2. Расчет как в VBA (но с учетом регистрации, страховки и маржи)
-                const registrationFee = HIDDEN_ADMIN_PARAMS.registrationFee;
-                
-                // Общая стоимость = стоимость объекта + регистрация
-                const totalCost = totalPrice + registrationFee;
-                
-                // Аванс = общая стоимость * процент аванса
-                const advanceAmount = totalCost * advancePercent;
-                
-                // Сумма лизинга = общая стоимость - аванс (как leaseAmount в VBA)
-                const leaseAmount = totalCost - advanceAmount;
-                
-                // 3. Расчет эффективной ставки (как в вашем примере)
-                // В VBA используется monthlyFixed = annualFixed / 12
-                const annualFixed = HIDDEN_ADMIN_PARAMS.annualFixed; // 29.75%
-                const monthlyFixed = annualFixed / 12;
-                
-                // 4. Но нам нужно добавить страховку и маржу
-                // Страховка (0.24% от стоимости объекта)
-                const insuranceAnnual = totalPrice * HIDDEN_ADMIN_PARAMS.insuranceRate;
-                
-                // Маржа (3% от общей стоимости)
-                const marginAnnual = totalCost * HIDDEN_ADMIN_PARAMS.marginRate;
-                
-                // Ставка лизинга (29.75% от суммы лизинга)
-                const leasingAnnual = leaseAmount * annualFixed;
-                
-                // Общая годовая сумма процентов
-                const totalAnnualInterest = leasingAnnual + insuranceAnnual + marginAnnual;
-                
-                // Эффективная годовая ставка
-                const effectiveAnnualRate = totalAnnualInterest / leaseAmount;
-                
-                // Месячная ставка для расчета
-                const monthlyRateForCalc = effectiveAnnualRate / 12;
-                
-                // 5. Выбор типа графика (как в VBA Select Case)
-                let schedule = [];
-                let isRass = false;
-                
-                switch(paymentType) {
-                    case 'annuity':
-                        schedule = CalcAnnuity(leaseAmount, monthlyRateForCalc, term);
-                        break;
-                    case 'linear':
-                        schedule = CalcLinear(leaseAmount, monthlyRateForCalc, term);
-                        break;
-                    case 'declining2x':
-                        schedule = CalcDeclining_2x3x(leaseAmount, monthlyRateForCalc, term, 2);
-                        break;
-                    case 'declining3x':
-                        schedule = CalcDeclining_2x3x(leaseAmount, monthlyRateForCalc, term, 3);
-                        break;
-                    case 'quarterly_annuity':
-                        schedule = CalcQuarterly_Annuity(leaseAmount, monthlyRateForCalc, term);
-                        break;
-                    case 'quarterly_linear':
-                        schedule = CalcQuarterly_Linear(leaseAmount, monthlyRateForCalc, term);
-                        break;
-                    case 'installment_monthly':
-                        schedule = CalcInstallment_Monthly(leaseAmount, term);
-                        isRass = true;
-                        break;
-                    case 'installment_quarterly':
-                        schedule = CalcInstallment_Quarterly(leaseAmount, term);
-                        isRass = true;
-                        break;
-                    default:
-                        schedule = CalcAnnuity(leaseAmount, monthlyRateForCalc, term);
-                }
-                
-                // 6. Добавление дополнительного платежа (как в VBA)
-                if (extraPayment !== 0) {
-                    schedule.forEach(item => {
-                        if (item.payment !== null) {
-                            item.payment += extraPayment;
-                        }
-                    });
-                }
-                
-                // 7. Расчет общей переплаты (как в VBA)
-                let totalInterest = 0;
-                schedule.forEach(item => {
-                    if (item.interest !== null) totalInterest += item.interest;
-                });
-                
-                // 8. Обновление интерфейса
-                updateDisplay(leaseAmount, advanceAmount, totalInterest, schedule);
-                
-            } catch (error) {
-                alert('Ошибка расчета: ' + error.message);
-            }
-        }
+/* ===== ЛИНЕЙНЫЙ ===== */
+function linear(A,r,n){
+ let pr=A/n,b=A,res=[];
+ for(let i=1;i<=n;i++){
+  let iN=b*r,p=(i===n?b:pr)+iN;
+  b-=i===n?b:pr;if(b<1e-6)b=0;
+  res.push({m:i,p:r2(p),pr:r2(p-iN),i:r2(iN),b:r2(b)});
+ }
+ return res;
+}
 
-        // ========== 4. ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
-        let elements = {};
+/* ===== ОСНОВНОЙ ===== */
+function BuildSchedule(){
+ const price=num(totalPrice.value);
+ const adv=pct(advancePercent.value);
+ const termN=parseInt(term.value);
+ const extra=num(extraPayment.value);
+ const type=paymentType.value;
 
-        function initApp() {
-            elements = {
-                totalPrice: document.getElementById('totalPrice'),
-                advancePercent: document.getElementById('advancePercent'),
-                term: document.getElementById('term'),
-                extraPayment: document.getElementById('extraPayment'),
-                paymentType: document.getElementById('paymentType'),
-                calculateBtn: document.getElementById('calculateBtn'),
-                loader: document.getElementById('loader'),
-                leasingAmount: document.getElementById('leasingAmount'),
-                advanceAmount: document.getElementById('advanceAmount'),
-                totalOverpayment: document.getElementById('totalOverpayment'),
-                monthlyPayment: document.getElementById('monthlyPayment'),
-                scheduleBody: document.getElementById('scheduleBody')
-            };
-            
-            setupAutoFormat();
-            setupEventListeners();
-            Build_Schedule();
-        }
+ const insurance=price*ADMIN.insuranceRate;
+ const margin=price*ADMIN.marginRate;
 
-        function setupAutoFormat() {
-            document.querySelectorAll('.currency-input input').forEach(input => {
-                input.addEventListener('input', function(e) {
-                    const cursorPos = this.selectionStart;
-                    const originalValue = this.value.replace(/\s/g, '');
-                    
-                    if (originalValue === '') {
-                        this.value = '';
-                        return;
-                    }
-                    
-                    if (!isNaN(parseFloat(originalValue))) {
-                        const formatted = formatNumber(parseFloat(originalValue));
-                        this.value = formatted;
-                        const diff = formatted.length - this.value.length;
-                        this.setSelectionRange(cursorPos + diff, cursorPos + diff);
-                    }
-                });
-            });
-        }
+ const total=price+insurance+margin+ADMIN.registrationFee;
+ const advance=total*adv;
+ const lease=total-advance;
 
-        function setupEventListeners() {
-            elements.calculateBtn.addEventListener('click', function() {
-                elements.loader.classList.add('active');
-                setTimeout(() => {
-                    Build_Schedule();
-                    elements.loader.classList.remove('active');
-                }, 300);
-            });
-            
-            ['totalPrice', 'advancePercent', 'term', 'extraPayment', 'paymentType']
-                .forEach(id => {
-                    document.getElementById(id).addEventListener('change', function() {
-                        elements.loader.classList.add('active');
-                        setTimeout(() => {
-                            Build_Schedule();
-                            elements.loader.classList.remove('active');
-                        }, 300);
-                    });
-                });
-        }
+ const r=ADMIN.annualRate/12;
 
-        function updateDisplay(leasingAmount, advanceAmount, totalInterest, schedule) {
-            // Итоговые значения
-            elements.leasingAmount.textContent = formatNumberWithDecimals(leasingAmount);
-            elements.advanceAmount.textContent = formatNumberWithDecimals(advanceAmount);
-            elements.totalOverpayment.textContent = formatNumberWithDecimals(totalInterest);
-            elements.monthlyPayment.textContent = schedule.length > 0 && schedule[0].payment !== null 
-                ? formatNumberWithDecimals(schedule[0].payment)
-                : '0';
-            
-            // Таблица платежей
-            elements.scheduleBody.innerHTML = '';
-            
-            if (schedule.length === 0) {
-                elements.scheduleBody.innerHTML = '<tr><td colspan="5">Нет данных для отображения</td></tr>';
-                return;
-            }
-            
-            schedule.forEach(item => {
-                const row = document.createElement('tr');
-                
-                const monthCell = document.createElement('td');
-                monthCell.textContent = item.month;
-                row.appendChild(monthCell);
-                
-                const paymentCell = document.createElement('td');
-                paymentCell.textContent = item.payment !== null ? formatNumberWithDecimals(item.payment) : '-';
-                paymentCell.style.fontWeight = 'bold';
-                row.appendChild(paymentCell);
-                
-                const principalCell = document.createElement('td');
-                principalCell.textContent = item.principal !== null ? formatNumberWithDecimals(item.principal) : '-';
-                row.appendChild(principalCell);
-                
-                const interestCell = document.createElement('td');
-                interestCell.textContent = item.interest !== null ? formatNumberWithDecimals(item.interest) : '-';
-                row.appendChild(interestCell);
-                
-                const balanceCell = document.createElement('td');
-                balanceCell.textContent = item.balance !== null ? formatNumberWithDecimals(item.balance) : '-';
-                row.appendChild(balanceCell);
-                
-                elements.scheduleBody.appendChild(row);
-            });
-        }
+ let sch=[];
+ if(type==='annuity') sch=annuity(lease,r,termN);
+ if(type==='linear') sch=linear(lease,r,termN);
+ if(type==='installment_monthly') sch=linear(lease,0,termN);
 
-        // Запуск приложения
-        window.addEventListener('DOMContentLoaded', initApp);
-    </script>
+ let interest=0;
+ sch.forEach(x=>{x.p+=extra;interest+=x.i});
+
+ leasingAmount.textContent=r2(lease).toLocaleString();
+ advanceAmount.textContent=r2(advance).toLocaleString();
+ totalOverpayment.textContent=r2(interest).toLocaleString();
+
+ scheduleBody.innerHTML='';
+ sch.forEach(x=>{
+  scheduleBody.innerHTML+=`<tr>
+  <td>${x.m}</td>
+  <td>${x.p.toLocaleString()}</td>
+  <td>${x.pr.toLocaleString()}</td>
+  <td>${x.i.toLocaleString()}</td>
+  <td>${x.b.toLocaleString()}</td></tr>`;
+ });
+}
+
+BuildSchedule();
+</script>
 </body>
 </html>

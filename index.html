@@ -61,7 +61,7 @@ tbody tr:nth-child(even){background:#fafafa}
 
 <div class="input-group">
 <label>Срок (мес.)</label>
-<input type="number" id="term" value="36" min="1">
+<input type="number" id="term" value="6" min="1">
 </div>
 
 <div class="input-group">
@@ -79,8 +79,6 @@ tbody tr:nth-child(even){background:#fafafa}
 <option value="linear">Линейный</option>
 <option value="decl2">Убывающий 2x</option>
 <option value="decl3">Убывающий 3x</option>
-<option value="q_annuity">Ежеквартальный аннуитет</option>
-<option value="q_linear">Ежеквартальный линейный</option>
 <option value="inst_m">Рассрочка ежемесячная</option>
 <option value="inst_q">Рассрочка квартальная</option>
 </select>
@@ -117,128 +115,94 @@ tbody tr:nth-child(even){background:#fafafa}
 </div>
 
 <script>
-const REG=876736;
-const RATE=0.2975;
-const INS=0.0024;
-const MARGIN=0.03;
+const REG = 876736;
+const MONTHLY_RATE = 0.2975 / 12;
 
-function n(v){
-if(typeof v==="number")return v;
-v=String(v).replace(/[%\s\u00A0]/g,"").replace(",",".");
+function parseNum(v){
+v=String(v).replace(/\s|\u00A0/g,'').replace(',','.');
 let x=parseFloat(v);
 return isNaN(x)?0:x;
 }
 
-function f(x){
+function formatNum(x){
 x=Math.round(x*100)/100;
-let p=x.toString().split(".");
-p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g," ");
-return p.length==1?p[0]+".00":p[1].length==1?p[0]+"."+p[1]+"0":p.join(".");
+let p=x.toString().split('.');
+p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+return p.length===1?p[0]+'.00':p[1].length===1?p[0]+'.'+p[1]+'0':p.join('.');
 }
 
-function annuity(a,r,t){
-let s=[],bal=a;
-let pay=r==0?a/t:a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
-for(let i=1;i<=t;i++){
-let intr=bal*r;
+function annuity(amount,rate,term){
+let res=[],bal=amount;
+let pay=amount*(rate*Math.pow(1+rate,term))/(Math.pow(1+rate,term)-1);
+for(let i=1;i<=term;i++){
+let intr=bal*rate;
 let pr=Math.min(bal,Math.max(0,pay-intr));
 bal-=pr;
-s.push([i,pay,pr,intr,Math.max(0,bal)]);
+res.push([i,pay,pr,intr,Math.max(0,bal)]);
 }
-return s;
+return res;
 }
 
-function linear(a,r,t){
-let s=[],bal=a,pr=a/t;
-for(let i=1;i<=t;i++){
-let intr=bal*r;
-let p=i==t?bal:pr;
+function linear(amount,rate,term){
+let res=[],bal=amount,pr=amount/term;
+for(let i=1;i<=term;i++){
+let intr=bal*rate;
+let p=i===term?bal:pr;
 bal-=p;
-s.push([i,p+intr,p,intr,Math.max(0,bal)]);
+res.push([i,p+intr,p,intr,Math.max(0,bal)]);
 }
-return s;
-}
-
-function decl(a,r,t,k){
-let ann=r==0?a/t:a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
-let f=ann*1.5,l=f/k,d=t>1?(f-l)/(t-1):0;
-let best=f,err=a;
-for(let it=0;it<200;it++){
-let b=a,ok=true;
-for(let i=1;i<=t;i++){
-let cur=f-(i-1)*d;
-let intr=b*r,pr=cur-intr;
-if(pr<=0){ok=false;break}
-b-=pr;
-}
-if(ok){
-if(Math.abs(b)<Math.abs(err)){err=b;best=f}
-if(Math.abs(b)<a*1e-6)break;
-f*=b>0?1.001:0.999;
-}else f*=1.001;
-l=f/k;d=t>1?(f-l)/(t-1):0;
-}
-f=best;l=f/k;d=t>1?(f-l)/(t-1):0;
-let s=[],bal=a;
-for(let i=1;i<=t;i++){
-let pay=f-(i-1)*d;
-let intr=bal*r;
-let pr=i==t?bal:Math.min(bal,Math.max(0,pay-intr));
-bal-=pr;
-s.push([i,pay,pr,intr,Math.max(0,bal)]);
-}
-return s;
+return res;
 }
 
-function inst(a,t){
-let s=[],bal=a,p=a/t;
-for(let i=1;i<=t;i++){
-let pr=i==t?bal:p;
-bal-=pr;
-s.push([i,pr,pr,0,Math.max(0,bal)]);
+function inst(amount,term){
+let res=[],bal=amount,pr=amount/term;
+for(let i=1;i<=term;i++){
+let p=i===term?bal:pr;
+bal-=p;
+res.push([i,p,p,0,Math.max(0,bal)]);
 }
-return s;
+return res;
 }
 
 function build(){
-let P=n(price.value);
-let A=n(advance.value)/100;
+let P=parseNum(price.value);
+let A=parseNum(advance.value)/100;
 let T=parseInt(term.value);
-let E=n(extra.value);
+let E=parseNum(extra.value);
 
 let total=P+REG;
 let adv=total*A;
 let lease=total-adv;
 
-let annual=(lease*RATE+P*INS+total*MARGIN)/lease;
-let mr=annual/12;
-
-let s=[];
+let sch=[];
 switch(type.value){
-case"annuity":s=annuity(lease,mr,T);break;
-case"linear":s=linear(lease,mr,T);break;
-case"decl2":s=decl(lease,mr,T,2);break;
-case"decl3":s=decl(lease,mr,T,3);break;
-case"q_annuity":s=annuity(lease,mr,T);break;
-case"q_linear":s=linear(lease,mr,T);break;
-case"inst_m":s=inst(lease,T);break;
-case"inst_q":s=inst(lease,T);break;
+case'annuity':sch=annuity(lease,MONTHLY_RATE,T);break;
+case'linear':sch=linear(lease,MONTHLY_RATE,T);break;
+case'inst_m':sch=inst(lease,T);break;
+case'inst_q':sch=inst(lease,T);break;
 }
 
 let over=0;
-tbl.innerHTML="";
-s.forEach(r=>{
-if(r[3])over+=r[3];
-let tr=document.createElement("tr");
-tr.innerHTML=`<td>${r[0]}</td><td>${f(r[1]+E)}</td><td>${f(r[2])}</td><td>${f(r[3])}</td><td>${f(r[4])}</td>`;
+tbl.innerHTML='';
+sch.forEach(r=>{
+over+=r[3];
+let tr=document.createElement('tr');
+tr.innerHTML=`<td>${r[0]}</td><td>${formatNum(r[1]+E)}</td><td>${formatNum(r[2])}</td><td>${formatNum(r[3])}</td><td>${formatNum(r[4])}</td>`;
 tbl.appendChild(tr);
 });
 
-outLease.textContent=f(lease);
-outAdvance.textContent=f(adv);
-outOver.textContent=f(over);
-outPay.textContent=f(s[0][1]+E);
+outLease.textContent=formatNum(lease);
+outAdvance.textContent=formatNum(adv);
+outOver.textContent=formatNum(over);
+outPay.textContent=formatNum(sch[0][1]+E);
 }
+
+document.querySelectorAll('.currency-input input').forEach(i=>{
+i.addEventListener('input',e=>{
+let v=parseNum(i.value);
+if(v) i.value=v.toLocaleString('ru-RU');
+});
+});
 
 build();
 </script>

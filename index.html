@@ -259,9 +259,70 @@ return res;
 }
 
 function build(){
-let P=n(price.value),A=n(advance.value)/100,T=+term.value,E=n(extra.value);
-let total=P+REG,adv=total*A,lease=total-adv,margin=total*MARGIN_RATE;
-let sch=annuity(lease,RATE,T);
+  let P = n(price.value),
+      A = n(advance.value) / 100,
+      T = +term.value,
+      E = n(extra.value);
+
+  let total  = P + REG;
+  let adv    = total * A;
+  let lease  = total - adv;
+  let margin = total * MARGIN_RATE;
+
+  let sch = [];
+
+  switch(type.value){
+    case "annuity":
+      sch = annuity(lease, RATE, T);
+      break;
+
+    case "decl2":
+      sch = declining(lease, RATE, T, 2);
+      break;
+
+    case "decl3":
+      sch = declining(lease, RATE, T, 3);
+      break;
+
+    case "linear_q":
+      sch = linearQuarterly(lease, RATE, T);
+      break;
+
+    case "inst_m":
+      sch = installment(lease, T, false);
+      break;
+
+    case "inst_q":
+      sch = installment(lease, T, true);
+      break;
+
+    default:
+      sch = annuity(lease, RATE, T);
+  }
+
+  let over = 0;
+  tbl.innerHTML = "";
+
+  sch.forEach(r => {
+    if(r[3]) over += r[3];
+
+    tbl.innerHTML += `
+      <tr>
+        <td>${r[0]}</td>
+        <td>${r[1] != null ? f(r[1] + E) : '-'}</td>
+        <td>${r[2] != null ? f(r[2]) : '-'}</td>
+        <td>${r[3] != null ? f(r[3]) : '-'}</td>
+        <td>${r[4] != null ? f(r[4]) : '-'}</td>
+      </tr>
+    `;
+  });
+
+  outLease.textContent   = f(lease);
+  outAdvance.textContent = f(adv);
+  outOver.textContent    = f(over);
+  outMargin.textContent  = f(margin);
+}
+
 
 let over=0;tbl.innerHTML="";
 sch.forEach(r=>{over+=r[3];tbl.innerHTML+=`<tr>

@@ -257,6 +257,82 @@ let bal=a,res=[],pay=a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
 for(let i=1;i<=t;i++){let intr=bal*r,pr=Math.min(bal,pay-intr);bal-=pr;res.push([i,pay,pr,intr,Math.max(0,bal)])}
 return res;
 }
+function declining(a,r,t,ratio){
+  let ann=a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
+  let first=ann*1.5,last=first/ratio,dec=t>1?(first-last)/(t-1):0,best=first,err=a;
+
+  for(let it=0;it<200;it++){
+    let bal=a,ok=true;
+    for(let i=1;i<=t;i++){
+      let cur=first-(i-1)*dec,intr=bal*r,pr=cur-intr;
+      if(pr<=0){ok=false;break}
+      bal-=pr;
+    }
+    if(ok){
+      if(Math.abs(bal)<Math.abs(err)){err=bal;best=first}
+      if(Math.abs(bal)<a*1e-6)break;
+      first*=bal>0?1.001:0.999;
+    }else first*=1.001;
+
+    last=first/ratio;
+    dec=t>1?(first-last)/(t-1):0;
+  }
+
+  first=best;
+  last=first/ratio;
+  dec=t>1?(first-last)/(t-1):0;
+
+  let res=[],bal=a;
+  for(let i=1;i<=t;i++){
+    let pay=first-(i-1)*dec,intr=bal*r,pr;
+    if(i===t){
+      pr=bal;pay=pr+intr;bal=0;
+    }else{
+      pr=pay-intr;
+      if(pr<0)pr=0;
+      if(pr>bal)pr=bal;
+      bal-=pr;
+    }
+    res.push([i,pay,pr,intr,Math.max(0,bal)]);
+  }
+  return res;
+}
+
+function linearQuarterly(a,r,t){
+  let res=[],bal=a,q=Math.floor((t+2)/3),prQ=a/q;
+  for(let i=1;i<=t;i++){
+    let intr=bal*r;
+    if(i%3===0||i===t){
+      let pr=i===t?bal:prQ;
+      let pay=pr+intr*3;
+      bal-=pr;
+      res.push([i,pay,pr,intr,Math.max(0,bal)]);
+    }else{
+      res.push([i,null,null,intr,bal]);
+    }
+  }
+  return res;
+}
+
+function installment(a,t,quarter){
+  let res=[],bal=a,per=a/t,acc=0;
+  for(let i=1;i<=t;i++){
+    let p=i===t?bal:per;
+    bal-=p;
+    if(quarter){
+      acc+=p;
+      if(i%3===0||i===t){
+        res.push([i,acc,acc,0,Math.max(0,bal)]);
+        acc=0;
+      }else{
+        res.push([i,null,null,null,null]);
+      }
+    }else{
+      res.push([i,p,p,0,Math.max(0,bal)]);
+    }
+  }
+  return res;
+}
 
 function build(){
   let P = n(price.value),

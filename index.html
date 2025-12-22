@@ -7,42 +7,46 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
-body{background:#f4f6fb;padding:20px}
-.container{max-width:1200px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:35px}
+body{background:#f4f6fb;padding:16px}
+.container{max-width:1100px;margin:auto;background:#fff;border-radius:16px;
+box-shadow:0 15px 45px rgba(0,0,0,.12);padding:28px}
 
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
-h1{font-size:26px;color:#2c3e50}
-button{padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#667eea;color:#fff}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{font-size:24px;color:#2c3e50}
+button{padding:10px 16px;border:none;border-radius:8px;
+font-size:13px;font-weight:600;cursor:pointer;background:#667eea;color:#fff}
 
-.layout{display:flex;gap:30px}
-.inputs{width:320px}
-.input-group{margin-bottom:18px}
-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#495057}
-input,select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px}
+.layout{display:flex;gap:24px}
 
-.main{flex:1}
+/* ===== ВВОД ===== */
+.inputs{width:300px}
+.input-group{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:#495057}
+input{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px}
 
+/* ===== КАРТОЧКИ ===== */
 .cards{
 display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:18px;
-margin-bottom:25px
+grid-template-columns:repeat(5,1fr);
+gap:12px;
+margin-bottom:18px
 }
 .card{
 background:#f8f9fa;
-border-radius:14px;
-padding:20px;
+border-radius:12px;
+padding:14px;
 text-align:center
 }
-.card-title{font-size:13px;color:#6c757d;margin-bottom:6px}
-.card-value{font-size:24px;font-weight:700;color:#2c3e50}
+.card-title{font-size:11px;color:#6c757d;margin-bottom:4px}
+.card-value{font-size:18px;font-weight:700;color:#2c3e50}
 
-table{width:100%;border-collapse:collapse;font-size:13px}
+/* ===== ТАБЛИЦА (TELEGRAM) ===== */
+table{width:100%;border-collapse:collapse;font-size:12px}
 thead{background:#2c3e50;color:#fff}
-th,td{padding:9px;text-align:center;border-bottom:1px solid #e5e5e5}
+th,td{padding:6px 6px;text-align:center;border-bottom:1px solid #e6e6e6}
 tbody tr:nth-child(even){background:#fafafa}
 
-/* ===== РЕЖИМ СКРИНШОТА ===== */
+/* ===== СКРИНШОТ ===== */
 .screenshot body{background:#fff}
 .screenshot .container{box-shadow:none}
 .screenshot .inputs,
@@ -60,7 +64,7 @@ tbody tr:nth-child(even){background:#fafafa}
 
 <div class="layout">
 
-<!-- ===== ВВОД ДАННЫХ ===== -->
+<!-- ===== ВВОД ===== -->
 <div class="inputs">
 <div class="input-group">
 <label>Стоимость объекта</label>
@@ -76,8 +80,8 @@ tbody tr:nth-child(even){background:#fafafa}
 </div>
 </div>
 
-<!-- ===== РЕЗУЛЬТАТЫ ===== -->
-<div class="main">
+<!-- ===== РЕЗУЛЬТАТ ===== -->
+<div style="flex:1">
 
 <div class="cards">
 <div class="card">
@@ -96,15 +100,19 @@ tbody tr:nth-child(even){background:#fafafa}
 <div class="card-title">Единовременная маржа</div>
 <div class="card-value" id="marginSum">0</div>
 </div>
+<div class="card">
+<div class="card-title">Страхование (год)</div>
+<div class="card-value" id="insuranceSum">0</div>
+</div>
 </div>
 
 <table>
 <thead>
 <tr>
-<th>Месяц</th>
+<th>Мес</th>
 <th>Платёж</th>
-<th>В долг</th>
-<th>В %</th>
+<th>Долг</th>
+<th>%</th>
 <th>Остаток</th>
 </tr>
 </thead>
@@ -119,6 +127,7 @@ tbody tr:nth-child(even){background:#fafafa}
 const REG = 876736;
 const RATE = 0.2975/12;
 const MARGIN_RATE = 0.03;
+const INS_RATE = 0.0024;
 
 function n(v){return parseFloat(String(v).replace(/\s/g,''))||0}
 function f(x){
@@ -148,6 +157,7 @@ const total=P+REG;
 const advance=total*A;
 const lease=total-advance;
 const margin=total*MARGIN_RATE;
+const insurance=P*INS_RATE;
 
 const sch=annuity(lease,RATE,T);
 
@@ -169,6 +179,7 @@ leaseSum.textContent=f(lease);
 advanceSum.textContent=f(advance);
 totalInterest.textContent=f(intSum);
 marginSum.textContent=f(margin);
+insuranceSum.textContent=f(insurance);
 }
 
 function toggleScreenshot(){

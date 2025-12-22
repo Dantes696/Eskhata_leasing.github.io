@@ -357,13 +357,13 @@
                 <div class="input-group">
                     <label>Тип графика платежей</label>
                     <select id="paymentType">
-                        <option value="annuity">Аннуитет (Лизинг/Финаренда)</option>
+                        <option value="annuity" selected>Аннуитет (Лизинг/Финаренда)</option>
                         <option value="linear">Линейный</option>
                         <option value="declining2x">Убывающий 2x</option>
                         <option value="declining3x">Убывающий 3x</option>
                         <option value="quarterly_annuity">Ежеквартальный аннуитет</option>
                         <option value="quarterly_linear">Ежеквартальный линейный</option>
-                        <option value="installment_monthly" selected>Рассрочка ежемесячная</option>
+                        <option value="installment_monthly">Рассрочка ежемесячная</option>
                         <option value="installment_quarterly">Рассрочка квартальная</option>
                     </select>
                 </div>
@@ -391,6 +391,10 @@
                         <div class="summary-item">
                             <div class="summary-label">Общая переплата</div>
                             <div class="summary-value uzs" id="totalOverpayment">0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Месячный платеж</div>
+                            <div class="summary-value uzs" id="monthlyPayment">0</div>
                         </div>
                     </div>
                 </div>
@@ -807,6 +811,7 @@
                 leasingAmount: document.getElementById('leasingAmount'),
                 advanceAmount: document.getElementById('advanceAmount'),
                 totalOverpayment: document.getElementById('totalOverpayment'),
+                monthlyPayment: document.getElementById('monthlyPayment'),
                 scheduleBody: document.getElementById('scheduleBody')
             };
             
@@ -864,7 +869,7 @@
                     
                     // Валидация
                     if (totalPrice <= 0 || isNaN(totalPrice)) {
-                        alert('Стоимость объекта должна быть положительным числом');
+                        alert('Стоимость имущества должна быть положительным числом');
                         return;
                     }
                     
@@ -885,7 +890,7 @@
                     // 3. Сумма лизинга = общая стоимость - аванс
                     const leasingAmount = totalCostWithRegistration - advanceAmount;
                     
-                    // 4. Расчет ставок:
+                    // 4. Расчет ГОДОВЫХ процентов (не месячных!):
                     // - Страховка (0.24%) от стоимости объекта
                     const insuranceAnnual = totalPrice * HIDDEN_ADMIN_PARAMS.insuranceRate;
                     
@@ -895,15 +900,17 @@
                     // - Ставка лизинга (29.75%) от суммы лизинга
                     const leasingAnnual = leasingAmount * HIDDEN_ADMIN_PARAMS.leasingRate;
                     
-                    // 5. Общая годовая сумма процентов
+                    // 5. ОБЩАЯ годовая сумма процентов
                     const totalAnnualInterest = leasingAnnual + insuranceAnnual + marginAnnual;
                     
-                    // 6. Эффективная годовая ставка для расчета месячных платежей
-                    const effectiveAnnualRate = totalAnnualInterest / leasingAmount;
-                    const monthlyRate = effectiveAnnualRate / 12;
+                    // 6. ВАЖНО: Расчет ПРОСТОЙ месячной ставки (не эффективной!)
+                    // Ваш пример показывает платеж 7 875 358, значит используется простая ставка
+                    // totalAnnualInterest / leasingAmount = годовая ставка
+                    // Делим на 12 для получения месячной ставки
+                    const simpleMonthlyRate = (totalAnnualInterest / leasingAmount) / 12;
                     
-                    // 7. График платежей
-                    const schedule = getScheduleByType(paymentType, leasingAmount, monthlyRate, term);
+                    // 7. График платежей с ПРОСТОЙ месячной ставкой
+                    const schedule = getScheduleByType(paymentType, leasingAmount, simpleMonthlyRate, term);
                     
                     // 8. Дополнительный платеж
                     if (extraPayment > 0) {
@@ -914,12 +921,17 @@
                     
                     // 9. Итоги
                     let totalInterest = 0;
+                    let monthlyPaymentValue = 0;
+                    
                     schedule.forEach(item => {
                         if (item.interest !== null) totalInterest += item.interest;
+                        if (item.month === 1 && item.payment !== null) {
+                            monthlyPaymentValue = item.payment;
+                        }
                     });
                     
                     // 10. Обновление интерфейса
-                    updateDisplay(leasingAmount, advanceAmount, totalInterest, schedule);
+                    updateDisplay(leasingAmount, advanceAmount, totalInterest, monthlyPaymentValue, schedule);
                     
                     elements.loader.classList.remove('active');
                     
@@ -930,11 +942,14 @@
             }, 300);
         }
 
-        function updateDisplay(leasingAmount, advanceAmount, totalInterest, schedule) {
+        function updateDisplay(leasingAmount, advanceAmount, totalInterest, monthlyPayment, schedule) {
             // Итоговые значения с 2 знаками после запятой
             elements.leasingAmount.textContent = formatNumberWithDecimals(leasingAmount);
             elements.advanceAmount.textContent = formatNumberWithDecimals(advanceAmount);
             elements.totalOverpayment.textContent = formatNumberWithDecimals(totalInterest);
+            elements.monthlyPayment.textContent = schedule.length > 0 && schedule[0].payment !== null 
+                ? formatNumberWithDecimals(schedule[0].payment)
+                : '0';
             
             // Таблица платежей
             elements.scheduleBody.innerHTML = '';

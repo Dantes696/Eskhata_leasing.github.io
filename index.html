@@ -3,41 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Калькулятор лизинга</title>
+<title>Расчёт лизинга</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
 body{background:#f4f6fb;padding:20px}
 .container{max-width:1200px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:35px}
+
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
-h1{font-size:28px;color:#2c3e50}
+h1{font-size:26px;color:#2c3e50}
+button{padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#667eea;color:#fff}
 
-button{padding:12px 18px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;background:#667eea;color:#fff}
+.layout{display:flex;gap:30px}
+.inputs{width:320px}
+.input-group{margin-bottom:18px}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#495057}
+input,select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px}
 
-.top-grid{
+.main{flex:1}
+
+.cards{
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:18px;
-margin-bottom:30px
+margin-bottom:25px
 }
 .card{
 background:#f8f9fa;
 border-radius:14px;
-padding:22px;
+padding:20px;
 text-align:center
 }
-.card-title{font-size:14px;color:#6c757d;margin-bottom:8px}
-.card-value{font-size:26px;font-weight:700;color:#2c3e50}
+.card-title{font-size:13px;color:#6c757d;margin-bottom:6px}
+.card-value{font-size:24px;font-weight:700;color:#2c3e50}
 
-table{width:100%;border-collapse:collapse;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
 thead{background:#2c3e50;color:#fff}
-th,td{padding:10px;text-align:center;border-bottom:1px solid #e5e5e5}
+th,td{padding:9px;text-align:center;border-bottom:1px solid #e5e5e5}
 tbody tr:nth-child(even){background:#fafafa}
 
 /* ===== РЕЖИМ СКРИНШОТА ===== */
 .screenshot body{background:#fff}
 .screenshot .container{box-shadow:none}
-.screenshot .hide-screenshot{display:none}
+.screenshot .inputs,
+.screenshot .header button{display:none}
 </style>
 </head>
 
@@ -49,7 +58,28 @@ tbody tr:nth-child(even){background:#fafafa}
 <button onclick="toggleScreenshot()">Режим скриншота</button>
 </div>
 
-<div class="top-grid">
+<div class="layout">
+
+<!-- ===== ВВОД ДАННЫХ ===== -->
+<div class="inputs">
+<div class="input-group">
+<label>Стоимость объекта</label>
+<input id="price" value="307000000">
+</div>
+<div class="input-group">
+<label>Аванс (%)</label>
+<input id="advancePct" value="25">
+</div>
+<div class="input-group">
+<label>Срок (мес.)</label>
+<input id="term" value="36">
+</div>
+</div>
+
+<!-- ===== РЕЗУЛЬТАТЫ ===== -->
+<div class="main">
+
+<div class="cards">
 <div class="card">
 <div class="card-title">Сумма лизинга</div>
 <div class="card-value" id="leaseSum">0</div>
@@ -73,14 +103,16 @@ tbody tr:nth-child(even){background:#fafafa}
 <tr>
 <th>Месяц</th>
 <th>Платёж</th>
-<th>В погашение долга</th>
-<th>В погашение %</th>
-<th>Остаток долга</th>
+<th>В долг</th>
+<th>В %</th>
+<th>Остаток</th>
 </tr>
 </thead>
 <tbody id="schedule"></tbody>
 </table>
 
+</div>
+</div>
 </div>
 
 <script>
@@ -88,10 +120,7 @@ const REG = 876736;
 const RATE = 0.2975/12;
 const MARGIN_RATE = 0.03;
 
-const price = 307000000;
-const advancePct = 0.25;
-const term = 36;
-
+function n(v){return parseFloat(String(v).replace(/\s/g,''))||0}
 function f(x){
 x=Math.round(x*100)/100;
 let p=x.toString().split('.');
@@ -111,19 +140,22 @@ return res;
 }
 
 function build(){
-const total = price + REG;
-const advance = total * advancePct;
-const lease = total - advance;
-const margin = total * MARGIN_RATE;
+const P=n(price.value);
+const A=n(advancePct.value)/100;
+const T=n(term.value);
 
-const sch = annuity(lease,RATE,term);
+const total=P+REG;
+const advance=total*A;
+const lease=total-advance;
+const margin=total*MARGIN_RATE;
 
-let interestSum = 0;
-schedule.innerHTML = "";
+const sch=annuity(lease,RATE,T);
 
+let intSum=0;
+schedule.innerHTML="";
 sch.forEach(r=>{
-interestSum += r.intr;
-schedule.innerHTML += `
+intSum+=r.intr;
+schedule.innerHTML+=`
 <tr>
 <td>${r.m}</td>
 <td>${f(r.p)}</td>
@@ -133,15 +165,19 @@ schedule.innerHTML += `
 </tr>`;
 });
 
-leaseSum.textContent = f(lease);
-advanceSum.textContent = f(advance);
-totalInterest.textContent = f(interestSum);
-marginSum.textContent = f(margin);
+leaseSum.textContent=f(lease);
+advanceSum.textContent=f(advance);
+totalInterest.textContent=f(intSum);
+marginSum.textContent=f(margin);
 }
 
 function toggleScreenshot(){
 document.documentElement.classList.toggle('screenshot');
 }
+
+['price','advancePct','term'].forEach(id=>{
+document.getElementById(id).addEventListener('input',build);
+});
 
 build();
 </script>

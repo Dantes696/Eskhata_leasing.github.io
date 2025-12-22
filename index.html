@@ -427,11 +427,14 @@
             // Ставка лизинга: 29.75% годовых (фиксировано)
             leasingRate: 0.2975,
             
-            // Страховая ставка: 0.24% годовых
+            // Страховая ставка: 0.24% годовых (от стоимости объекта)
             insuranceRate: 0.0024,
             
-            // Маржа: 3% годовых
+            // Маржа: 3% годовых (от стоимости объекта + регистрация)
             marginRate: 0.03,
+            
+            // Сумма регистрации: фиксированная 876,736 UZS
+            registrationFee: 876736,
             
             // Коэффициент для убывающих платежей
             decliningRatio: 1.5,
@@ -851,11 +854,25 @@
                     const advanceAmount = totalPrice * advancePercent;
                     const leasingAmount = totalPrice - advanceAmount;
                     
-                    // Общая ставка (из скрытых параметров)
-                    const totalAnnualRate = HIDDEN_ADMIN_PARAMS.leasingRate + 
-                                           HIDDEN_ADMIN_PARAMS.insuranceRate + 
-                                           HIDDEN_ADMIN_PARAMS.marginRate;
-                    const monthlyRate = totalAnnualRate / 12;
+                    // Расчет ставок с учетом регистрации
+                    const registrationFee = HIDDEN_ADMIN_PARAMS.registrationFee;
+                    
+                    // Страховка считается от стоимости объекта
+                    const insuranceAnnual = totalPrice * HIDDEN_ADMIN_PARAMS.insuranceRate;
+                    
+                    // Маржа считается от (стоимость объекта + регистрация)
+                    const marginBase = totalPrice + registrationFee;
+                    const marginAnnual = marginBase * HIDDEN_ADMIN_PARAMS.marginRate;
+                    
+                    // Ставка лизинга фиксированная
+                    const leasingAnnual = leasingAmount * HIDDEN_ADMIN_PARAMS.leasingRate;
+                    
+                    // Общая годовая сумма процентов
+                    const totalAnnualInterest = leasingAnnual + insuranceAnnual + marginAnnual;
+                    
+                    // Эффективная годовая ставка (для расчета месячных платежей)
+                    const effectiveAnnualRate = totalAnnualInterest / leasingAmount;
+                    const monthlyRate = effectiveAnnualRate / 12;
                     
                     // График платежей
                     const schedule = getScheduleByType(paymentType, leasingAmount, monthlyRate, term);

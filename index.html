@@ -223,10 +223,28 @@ outOver.textContent=f(over);
 outMargin.textContent=f(margin);
 }
 
-function toggleClient(){document.documentElement.classList.toggle('client')}
+function applyAutoScale(){
+  if(!document.documentElement.classList.contains('client')) return;
 
-document.querySelectorAll('.currency-input input')
-.forEach(i=>i.addEventListener('input',()=>{let v=n(i.value);if(v||i.value==='0')i.value=v.toLocaleString('ru-RU')}));
+  const container = document.querySelector('.container');
+  container.style.transform = 'scale(1)';
+
+  const viewportH = window.innerHeight;
+  const rect = container.getBoundingClientRect();
+
+  if(rect.height > viewportH){
+    const scale = Math.floor((viewportH / rect.height) * 100) / 100;
+    container.style.transform = `scale(${scale})`;
+  }
+}
+
+function toggleClient(){
+  document.documentElement.classList.toggle('client');
+  setTimeout(applyAutoScale, 50);
+}
+
+window.addEventListener('resize', applyAutoScale);
+
 
 build();
 </script>

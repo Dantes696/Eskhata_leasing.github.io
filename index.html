@@ -3,54 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Расчёт лизинга</title>
+<title data-i18n="title">Калькулятор рассрочки</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
-body{background:#f4f6fb;padding:16px}
-.container{max-width:1100px;margin:auto;background:#fff;border-radius:16px;
-box-shadow:0 15px 45px rgba(0,0,0,.12);padding:28px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+body{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:flex-start}
+.container{background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:40px;max-width:1200px;width:100%;margin-top:20px}
 
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-h1{font-size:24px;color:#2c3e50}
-button{padding:10px 16px;border:none;border-radius:8px;
-font-size:13px;font-weight:600;cursor:pointer;background:#667eea;color:#fff}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+.lang-switch span{cursor:pointer;font-weight:600;margin-left:12px;color:#667eea}
+.lang-switch span.active{text-decoration:underline}
+h1{font-size:32px;color:#2c3e50}
 
-.layout{display:flex;gap:24px}
+.calculator-section{display:flex;flex-wrap:wrap;gap:40px}
+.input-section{flex:1;min-width:350px;padding:25px;background:#f8f9fa;border-radius:15px}
+.output-section{flex:2;min-width:500px}
 
-/* ===== ВВОД ===== */
-.inputs{width:300px}
-.input-group{margin-bottom:14px}
-label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:#495057}
-input{width:100%;padding:9px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px}
+.input-group{margin-bottom:20px}
+label{display:block;margin-bottom:8px;font-weight:600;font-size:14px;color:#495057}
+.currency-input,.percentage-input{position:relative}
+.currency-input input,.percentage-input input,input[type=number],select{
+width:100%;padding:12px 15px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px}
+.currency-input input{padding-left:45px}
+.percentage-input input{padding-right:45px}
+.currency-symbol{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-weight:bold}
+.percentage-symbol{position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:bold}
 
-/* ===== КАРТОЧКИ ===== */
-.cards{
-display:grid;
-grid-template-columns:repeat(5,1fr);
-gap:12px;
-margin-bottom:18px
-}
-.card{
-background:#f8f9fa;
-border-radius:12px;
-padding:14px;
-text-align:center
-}
-.card-title{font-size:11px;color:#6c757d;margin-bottom:4px}
-.card-value{font-size:18px;font-weight:700;color:#2c3e50}
+.calculate-btn,
+.client-btn{
+width:100%;padding:16px;border:none;border-radius:10px;font-size:18px;font-weight:600;cursor:pointer;margin-bottom:10px}
+.calculate-btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.client-btn{background:#2c3e50;color:#fff}
 
-/* ===== ТАБЛИЦА (TELEGRAM) ===== */
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead{background:#2c3e50;color:#fff}
-th,td{padding:6px 6px;text-align:center;border-bottom:1px solid #e6e6e6}
+.summary-section{background:#fff;border-radius:15px;padding:25px;margin-bottom:30px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.summary-item{text-align:center;padding:20px;background:#f8f9fa;border-radius:10px}
+.summary-label{font-size:14px;color:#6c757d;margin-bottom:8px}
+.summary-value{font-size:24px;font-weight:700;color:#2c3e50}
+
+.results-container{background:#fff;border-radius:15px;padding:25px}
+.schedule-container{max-height:400px;overflow:auto;border:2px solid #e9ecef;border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead{position:sticky;top:0;background:#2c3e50;color:#fff}
+th,td{padding:10px;text-align:center}
 tbody tr:nth-child(even){background:#fafafa}
 
-/* ===== СКРИНШОТ ===== */
-.screenshot body{background:#fff}
-.screenshot .container{box-shadow:none}
-.screenshot .inputs,
-.screenshot .header button{display:none}
+/* ===== CLIENT MODE ===== */
+.client body{background:#fff}
+.client .input-section,
+.client .calculate-btn,
+.client .client-btn,
+.client .lang-switch{display:none}
+.client .container{box-shadow:none}
 </style>
 </head>
 
@@ -58,78 +62,114 @@ tbody tr:nth-child(even){background:#fafafa}
 <div class="container">
 
 <div class="header">
-<h1>Расчёт лизинга</h1>
-<button onclick="toggleScreenshot()">Режим скриншота</button>
+<h1 data-i18n="title">Калькулятор рассрочки</h1>
+<div class="lang-switch">
+<span data-lang="ru">RU</span>
+<span data-lang="uz">UZ</span>
+<span data-lang="en">ENG</span>
+</div>
 </div>
 
-<div class="layout">
+<div class="calculator-section">
+<div class="input-section">
 
-<!-- ===== ВВОД ===== -->
-<div class="inputs">
 <div class="input-group">
-<label>Стоимость объекта</label>
-<input id="price" value="307000000">
+<label data-i18n="price">Стоимость имущества</label>
+<div class="currency-input">
+<span class="currency-symbol">UZS</span>
+<input type="text" id="price" value="265 000 000">
 </div>
+</div>
+
 <div class="input-group">
-<label>Аванс (%)</label>
-<input id="advancePct" value="25">
+<label data-i18n="advance">Аванс (%)</label>
+<div class="percentage-input">
+<input type="text" id="advance" value="30">
+<span class="percentage-symbol">%</span>
 </div>
+</div>
+
 <div class="input-group">
-<label>Срок (мес.)</label>
-<input id="term" value="36">
+<label data-i18n="term">Срок (мес.)</label>
+<input type="number" id="term" value="6" min="1">
+</div>
+
+<div class="input-group">
+<label data-i18n="extra">Доп. платёж</label>
+<div class="currency-input">
+<span class="currency-symbol">UZS</span>
+<input type="text" id="extra" value="0">
 </div>
 </div>
 
-<!-- ===== РЕЗУЛЬТАТ ===== -->
-<div style="flex:1">
-
-<div class="cards">
-<div class="card">
-<div class="card-title">Сумма лизинга</div>
-<div class="card-value" id="leaseSum">0</div>
-</div>
-<div class="card">
-<div class="card-title">Аванс</div>
-<div class="card-value" id="advanceSum">0</div>
-</div>
-<div class="card">
-<div class="card-title">Общие проценты</div>
-<div class="card-value" id="totalInterest">0</div>
-</div>
-<div class="card">
-<div class="card-title">Единовременная маржа</div>
-<div class="card-value" id="marginSum">0</div>
-</div>
-<div class="card">
-<div class="card-title">Страхование (год)</div>
-<div class="card-value" id="insuranceSum">0</div>
-</div>
+<div class="input-group">
+<label data-i18n="type">Тип графика</label>
+<select id="type">
+<option value="annuity" data-i18n="t_annuity">Аннуитет</option>
+<option value="decl2" data-i18n="t_decl2">Убывающий 2x</option>
+<option value="decl3" data-i18n="t_decl3">Убывающий 3x</option>
+<option value="linear_q" data-i18n="t_linear">Линейный (квартальный)</option>
+<option value="inst_m" data-i18n="t_inst_m">Рассрочка ежемесячная</option>
+<option value="inst_q" data-i18n="t_inst_q">Рассрочка квартальная</option>
+</select>
 </div>
 
+<button class="calculate-btn" onclick="build()" data-i18n="calc">Рассчитать</button>
+<button class="client-btn" onclick="toggleClient()">Режим для клиента</button>
+
+</div>
+
+<div class="output-section">
+
+<div class="summary-section">
+<div class="summary-grid">
+<div class="summary-item">
+  <div class="summary-label" data-i18n="lease">Сумма лизинга</div>
+  <div class="summary-value" id="outLease">0</div>
+</div>
+<div class="summary-item">
+  <div class="summary-label" data-i18n="adv">Аванс</div>
+  <div class="summary-value" id="outAdvance">0</div>
+</div>
+<div class="summary-item">
+  <div class="summary-label" data-i18n="over">Переплата</div>
+  <div class="summary-value" id="outOver">0</div>
+</div>
+<div class="summary-item">
+  <div class="summary-label">Единоразовая маржа</div>
+  <div class="summary-value" id="outMargin">0</div>
+</div>
+</div>
+</div>
+
+<div class="results-container">
+<div class="schedule-container">
 <table>
 <thead>
 <tr>
-<th>Мес</th>
-<th>Платёж</th>
-<th>Долг</th>
-<th>%</th>
-<th>Остаток</th>
+<th data-i18n="m">Мес</th>
+<th data-i18n="p">Платёж</th>
+<th data-i18n="pr">Тело</th>
+<th data-i18n="i">%</th>
+<th data-i18n="b">Остаток</th>
 </tr>
 </thead>
-<tbody id="schedule"></tbody>
+<tbody id="tbl"></tbody>
 </table>
+</div>
+</div>
 
 </div>
 </div>
+
 </div>
 
 <script>
 const REG = 876736;
-const RATE = 0.2975/12;
+const RATE = 0.2975 / 12;
 const MARGIN_RATE = 0.03;
-const INS_RATE = 0.0024;
 
-function n(v){return parseFloat(String(v).replace(/\s/g,''))||0}
+function n(v){return parseFloat(String(v).replace(/\s|\u00A0/g,'').replace(',','.'))||0}
 function f(x){
 x=Math.round(x*100)/100;
 let p=x.toString().split('.');
@@ -138,57 +178,49 @@ return p.length===1?p[0]+'.00':p[1].length===1?p[0]+'.'+p[1]+'0':p.join('.');
 }
 
 function annuity(a,r,t){
-let res=[],bal=a,pay=a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
+let bal=a,res=[],pay=a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
 for(let i=1;i<=t;i++){
-let intr=bal*r;
-let pr=Math.min(bal,pay-intr);
+let intr=bal*r,pr=Math.min(bal,pay-intr);
 bal-=pr;
-res.push({m:i,p:pay,pr:pr,intr:intr,bal:Math.max(0,bal)});
+res.push([i,pay,pr,intr,Math.max(0,bal)]);
 }
 return res;
 }
 
 function build(){
-const P=n(price.value);
-const A=n(advancePct.value)/100;
-const T=n(term.value);
+let P=n(price.value),A=n(advance.value)/100,T=+term.value,E=n(extra.value);
+let total=P+REG;
+let adv=total*A;
+let lease=total-adv;
+let margin=total*MARGIN_RATE;
 
-const total=P+REG;
-const advance=total*A;
-const lease=total-advance;
-const margin=total*MARGIN_RATE;
-const insurance=P*INS_RATE;
-
-const sch=annuity(lease,RATE,T);
-
-let intSum=0;
-schedule.innerHTML="";
+let sch=annuity(lease,RATE,T);
+let over=0;tbl.innerHTML="";
 sch.forEach(r=>{
-intSum+=r.intr;
-schedule.innerHTML+=`
-<tr>
-<td>${r.m}</td>
-<td>${f(r.p)}</td>
-<td>${f(r.pr)}</td>
-<td>${f(r.intr)}</td>
-<td>${f(r.bal)}</td>
+if(r[3]) over+=r[3];
+tbl.innerHTML+=`<tr>
+<td>${r[0]}</td>
+<td>${r[1]!=null?f(r[1]+E):'-'}</td>
+<td>${r[2]!=null?f(r[2]):'-'}</td>
+<td>${r[3]!=null?f(r[3]):'-'}</td>
+<td>${r[4]!=null?f(r[4]):'-'}</td>
 </tr>`;
 });
 
-leaseSum.textContent=f(lease);
-advanceSum.textContent=f(advance);
-totalInterest.textContent=f(intSum);
-marginSum.textContent=f(margin);
-insuranceSum.textContent=f(insurance);
+outLease.textContent=f(lease);
+outAdvance.textContent=f(adv);
+outOver.textContent=f(over);
+outMargin.textContent=f(margin);
 }
 
-function toggleScreenshot(){
-document.documentElement.classList.toggle('screenshot');
+function toggleClient(){
+document.documentElement.classList.toggle('client');
 }
 
-['price','advancePct','term'].forEach(id=>{
-document.getElementById(id).addEventListener('input',build);
-});
+document.querySelectorAll('.currency-input input')
+.forEach(i=>i.addEventListener('input',()=>{
+let v=n(i.value); if(v||i.value==='0') i.value=v.toLocaleString('ru-RU');
+}));
 
 build();
 </script>

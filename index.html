@@ -318,7 +318,7 @@
         <div class="calculator-section">
             <div class="input-section">
                 <div class="input-group">
-                    <label>Стоимость объекта (UZS)</label>
+                    <label>Стоимость имущества (UZS)</label>
                     <div class="currency-input">
                         <span class="currency-symbol">UZS</span>
                         <input type="text" id="totalPrice" placeholder="Введите цену актива" value="265 000 000">
@@ -423,350 +423,406 @@
     </div>
 
     <script>
-        // ========== СКРЫТЫЕ ПАРАМЕТРЫ АДМИНИСТРАТОРА ==========
-        // Эти параметры используются в расчетах, но не показываются пользователю
-        // Для изменения параметров редактируйте значения ниже:
+        // ========== ТОЧНАЯ КОПИЯ ВАШЕГО VBA МАКРОСА ==========
         
+        // Скрытые параметры (как в вашем VBA)
         const HIDDEN_ADMIN_PARAMS = {
-            // Ставка лизинга: 29.75% годовых (фиксировано)
-            leasingRate: 0.2975,
+            // Фиксированная ставка 29.75% годовых (как в строке VBA: annualFixed = 0.2975)
+            annualFixed: 0.2975,
             
-            // Страховая ставка: 0.24% годовых (от стоимости объекта)
-            insuranceRate: 0.0024,
-            
-            // Маржа: 3% годовых (от стоимости объекта + регистрация)
-            marginRate: 0.03,
-            
-            // Сумма регистрации: фиксированная 876,736 UZS
+            // Сумма регистрации (добавляется к стоимости объекта)
             registrationFee: 876736,
             
-            // Коэффициент для убывающих платежей
-            decliningRatio: 1.5,
+            // Страховая ставка: 0.24% годовых
+            insuranceRate: 0.0024,
             
-            // Ставка НДС для скрытой скидки
-            vatRate: 0.12
+            // Маржа: 3% годовых
+            marginRate: 0.03
         };
 
-        // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
-        // Форматирование чисел с пробелами (300 000 000) - БЕЗ десятичных
+        // ========== 1. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (ТОЧНО КАК В VBA) ==========
+
+        // NormalizePercent - точная копия VBA функции
+        function NormalizePercent(v) {
+            if (typeof v === 'number') {
+                if (v >= 0 && v < 1) return v;
+                if (v >= 1) return v / 100;
+            }
+            
+            let s = String(v);
+            s = s.replace(/%/g, '')
+                .replace(/ /g, '')
+                .replace(/\u00A0/g, '')  // Chr(160)
+                .replace(/,/g, '.')
+                .trim();
+            
+            if (s === '') return 0;
+            
+            if (!isNaN(parseFloat(s))) {
+                const nn = parseFloat(s);
+                return (nn >= 0 && nn < 1) ? nn : nn / 100;
+            } else {
+                return 0;
+            }
+        }
+
+        // ParseIfNumeric - точная копия VBA функции
+        function ParseIfNumeric(v) {
+            if (typeof v === 'number') return v;
+            
+            let s = String(v);
+            s = s.replace(/ /g, '')
+                .replace(/\u00A0/g, '')  // Chr(160)
+                .replace(/,/g, '.')
+                .trim();
+            
+            return !isNaN(parseFloat(s)) ? parseFloat(s) : 0;
+        }
+
+        // Форматирование чисел с пробелами
         function formatNumber(num) {
-            // Округляем до целых
             const rounded = Math.round(num);
-            // Форматируем с пробелами для тысяч
             return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
 
-        // Форматирование чисел с 2 знаками после запятой (но без запятых как разделителей)
+        // Форматирование чисел с 2 знаками после запятой
         function formatNumberWithDecimals(num) {
-            // Округляем до 2 знаков после запятой
             const rounded = Math.round(num * 100) / 100;
-            // Разделяем целую и дробную части
             const parts = rounded.toString().split('.');
-            // Форматируем целую часть с пробелами
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-            // Если нет дробной части, добавляем .00
+            
             if (parts.length === 1) {
                 return parts[0] + '.00';
             }
-            // Если дробная часть меньше 2 знаков, дополняем нулями
             if (parts[1].length === 1) {
                 parts[1] = parts[1] + '0';
             }
             return parts.join('.');
         }
 
-        // Парсинг форматированных чисел
-        function parseFormattedNumber(str) {
-            if (!str || str === '') return 0;
-            // Убираем пробелы, оставляем точки как разделители десятичных
-            const cleaned = String(str).replace(/\s/g, '').replace(',', '.');
-            const num = parseFloat(cleaned);
-            return isNaN(num) ? 0 : num;
-        }
+        // ========== 2. ФУНКЦИИ РАСЧЕТА (ТОЧНЫЕ КОПИИ VBA) ==========
 
-        // Нормализация процентов
-        function normalizePercent(value) {
-            if (typeof value === 'number') {
-                if (value >= 0 && value < 1) return value;
-                if (value >= 1) return value / 100;
-            }
-            
-            let str = String(value);
-            str = str.replace(/%/g, '')
-                    .replace(/\s/g, '')
-                    .replace(/,/g, '.')
-                    .trim();
-            
-            if (!str) return 0;
-            
-            const num = parseFloat(str);
-            if (isNaN(num)) return 0;
-            
-            return (num >= 0 && num < 1) ? num : num / 100;
-        }
-
-        // ========== ФУНКЦИИ ЛИЗИНГА ==========
-        function calcAnnuity(amount, rate, term) {
+        // CalcAnnuity - точная копия VBA функции
+        function CalcAnnuity(amount, rate, term) {
             if (term <= 0 || amount <= 0) return [];
             
             const schedule = [];
-            let balance = amount;
+            let bal = amount;
             
-            if (Math.abs(rate) < 1e-12) {
-                const payment = amount / term;
+            if (Math.abs(rate) < 0.000000000001) {
+                const pay = amount / term;
                 for (let i = 1; i <= term; i++) {
-                    const principal = (i === term) ? balance : payment;
-                    const interest = balance * rate;
-                    balance -= principal;
+                    const intr = bal * rate;
+                    const princ = (i === term) ? bal : pay;
+                    bal -= princ;
                     schedule.push({
                         month: i,
-                        payment: principal + interest,
-                        principal: principal,
-                        interest: interest,
-                        balance: Math.max(0, balance)
+                        payment: princ + intr,
+                        principal: princ,
+                        interest: intr,
+                        balance: Math.max(0, bal)
                     });
                 }
             } else {
-                const monthlyRate = rate;
-                const coefficient = Math.pow(1 + monthlyRate, term);
-                const payment = amount * (monthlyRate * coefficient) / (coefficient - 1);
+                const base = 1 + rate;
+                if (base <= 0 || base > 1000000) {
+                    // fallback (как в VBA)
+                    const perPr = amount / term;
+                    bal = amount;
+                    for (let i = 1; i <= term; i++) {
+                        const intr = bal * rate;
+                        const princ = (i === term) ? bal : perPr;
+                        const pay = princ + intr;
+                        bal -= princ;
+                        if (bal < 0.000000001) bal = 0;
+                        schedule.push({
+                            month: i,
+                            payment: pay,
+                            principal: princ,
+                            interest: intr,
+                            balance: bal
+                        });
+                    }
+                    return schedule;
+                }
+                
+                const pv = Math.pow(base, term);
+                const denom = pv - 1;
+                if (Math.abs(denom) < 0.000000000000001) {
+                    // fallback
+                    const perPr = amount / term;
+                    bal = amount;
+                    for (let i = 1; i <= term; i++) {
+                        const intr = bal * rate;
+                        const princ = (i === term) ? bal : perPr;
+                        const pay = princ + intr;
+                        bal -= princ;
+                        if (bal < 0.000000001) bal = 0;
+                        schedule.push({
+                            month: i,
+                            payment: pay,
+                            principal: princ,
+                            interest: intr,
+                            balance: bal
+                        });
+                    }
+                    return schedule;
+                }
+                
+                const pay = amount * (rate * pv) / denom;
+                bal = amount;
                 
                 for (let i = 1; i <= term; i++) {
-                    const interest = balance * monthlyRate;
-                    let principal = payment - interest;
-                    if (principal < 0) principal = 0;
-                    if (principal > balance) principal = balance;
-                    balance -= principal;
+                    const intr = bal * rate;
+                    let princ = pay - intr;
+                    if (princ < 0) princ = 0;
+                    if (princ > bal) princ = bal;
+                    bal -= princ;
                     schedule.push({
                         month: i,
-                        payment: principal + interest,
-                        principal: principal,
-                        interest: interest,
-                        balance: Math.max(0, balance)
+                        payment: pay,
+                        principal: princ,
+                        interest: intr,
+                        balance: Math.max(0, bal)
                     });
                 }
             }
             return schedule;
         }
 
-        function calcLinear(amount, rate, term) {
+        // CalcLinear - точная копия VBA функции
+        function CalcLinear(amount, rate, term) {
             const schedule = [];
-            const principalPerMonth = amount / term;
-            let balance = amount;
+            const princPer = amount / term;
+            let bal = amount;
             
             for (let i = 1; i <= term; i++) {
-                const interest = balance * rate;
-                const principal = (i === term) ? balance : principalPerMonth;
-                balance = Math.max(0, balance - principal);
+                const intr = bal * rate;
+                const pr = (i === term) ? bal : princPer;
+                const pay = pr + intr;
+                bal = Math.max(0, bal - pr);
                 schedule.push({
                     month: i,
-                    payment: principal + interest,
-                    principal: principal,
-                    interest: interest,
-                    balance: balance
+                    payment: pay,
+                    principal: pr,
+                    interest: intr,
+                    balance: bal
                 });
             }
             return schedule;
         }
 
-        function calcDeclining(amount, rate, term, ratio) {
+        // CalcDeclining_2x3x - точная копия VBA функции
+        function CalcDeclining_2x3x(amount, rate, term, ratio) {
             let annuity;
-            if (Math.abs(rate) < 1e-12) {
+            if (Math.abs(rate) < 0.000000000001) {
                 annuity = amount / term;
             } else {
-                const coeff = Math.pow(1 + rate, term);
-                annuity = amount * (rate * coeff) / (coeff - 1);
+                annuity = amount * (rate * Math.pow(1 + rate, term)) / (Math.pow(1 + rate, term) - 1);
             }
             
-            let firstPayment = annuity * HIDDEN_ADMIN_PARAMS.decliningRatio;
-            let lastPayment = firstPayment / ratio;
-            let decrement = (term > 1) ? (firstPayment - lastPayment) / (term - 1) : 0;
+            let firstPay = annuity * 1.5;
+            let lastPay = firstPay / ratio;
+            let dec = (term > 1) ? (firstPay - lastPay) / (term - 1) : 0;
             
-            let bestFirst = firstPayment;
-            let bestError = amount;
+            let bestFirst = firstPay;
+            let bestErr = amount;
             
-            for (let iter = 0; iter < 200; iter++) {
-                let testBalance = amount;
+            for (let iter = 1; iter <= 200; iter++) {
+                let testBal = amount;
                 let valid = true;
                 
-                for (let m = 0; m < term; m++) {
-                    const current = firstPayment - m * decrement;
-                    const interest = testBalance * rate;
-                    const principal = current - interest;
-                    if (principal <= 0) { valid = false; break; }
-                    testBalance -= principal;
+                for (let m = 1; m <= term; m++) {
+                    const cur = firstPay - (m - 1) * dec;
+                    const intr = testBal * rate;
+                    const prin = cur - intr;
+                    if (prin <= 0) {
+                        valid = false;
+                        break;
+                    }
+                    testBal -= prin;
                 }
                 
                 if (valid) {
-                    if (Math.abs(testBalance) < Math.abs(bestError)) {
-                        bestError = testBalance;
-                        bestFirst = firstPayment;
+                    if (Math.abs(testBal) < Math.abs(bestErr)) {
+                        bestErr = testBal;
+                        bestFirst = firstPay;
                     }
-                    if (Math.abs(testBalance) < amount * 1e-6) break;
-                    firstPayment *= (testBalance > 0) ? 1.001 : 0.999;
+                    if (Math.abs(testBal) < amount * 0.000001) break;
+                    firstPay *= (testBal > 0) ? 1.001 : 0.999;
                 } else {
-                    firstPayment *= 1.001;
+                    firstPay *= 1.001;
                 }
                 
-                lastPayment = firstPayment / ratio;
-                if (term > 1) decrement = (firstPayment - lastPayment) / (term - 1);
+                lastPay = firstPay / ratio;
+                if (term > 1) dec = (firstPay - lastPay) / (term - 1);
             }
             
-            firstPayment = bestFirst;
-            lastPayment = firstPayment / ratio;
-            if (term > 1) decrement = (firstPayment - lastPayment) / (term - 1);
+            firstPay = bestFirst;
+            lastPay = firstPay / ratio;
+            if (term > 1) dec = (firstPay - lastPay) / (term - 1);
             
             const schedule = [];
-            let balance = amount;
+            let bal = amount;
             
             for (let m = 1; m <= term; m++) {
-                let payment = firstPayment - (m - 1) * decrement;
-                const interest = balance * rate;
-                let principal;
+                let pay = firstPay - (m - 1) * dec;
+                const intr = bal * rate;
+                let prin;
                 
                 if (m === term) {
-                    principal = balance;
-                    payment = principal + interest;
-                    balance = 0;
+                    prin = bal;
+                    pay = prin + intr;
+                    bal = 0;
                 } else {
-                    principal = payment - interest;
-                    if (principal < 0) principal = 0;
-                    if (principal > balance) principal = balance;
-                    balance -= principal;
+                    prin = pay - intr;
+                    if (prin < 0) prin = 0;
+                    if (prin > bal) prin = bal;
+                    bal -= prin;
                 }
                 
                 schedule.push({
                     month: m,
-                    payment: payment,
-                    principal: principal,
-                    interest: interest,
-                    balance: Math.max(0, balance)
+                    payment: pay,
+                    principal: prin,
+                    interest: intr,
+                    balance: Math.max(0, bal)
                 });
             }
+            
             return schedule;
         }
 
-        function calcQuarterlyAnnuity(amount, rate, term) {
-            const monthly = calcAnnuity(amount, rate, term);
+        // CalcQuarterly_Annuity - точная копия VBA функции
+        function CalcQuarterly_Annuity(amount, rate, term) {
+            const monthly = CalcAnnuity(amount, rate, term);
             const schedule = [];
             
-            let accPayment = 0, accPrincipal = 0, accInterest = 0;
-            let balance = amount;
+            let accPay = 0, accPr = 0, accInt = 0;
+            let bal = amount;
             
             for (let i = 0; i < term; i++) {
                 const month = monthly[i];
-                accPayment += month.payment;
-                accPrincipal += month.principal;
-                accInterest += month.interest;
-                balance -= month.principal;
-                if (balance < 0) balance = 0;
+                accPay += month.payment;
+                accPr += month.principal;
+                accInt += month.interest;
+                bal -= month.principal;
+                if (bal < 0) bal = 0;
                 
                 const isQuarterEnd = ((i + 1) % 3 === 0) || (i + 1 === term);
                 
                 if (isQuarterEnd) {
                     schedule.push({
                         month: i + 1,
-                        payment: accPayment,
-                        principal: accPrincipal,
-                        interest: accInterest,
-                        balance: balance
+                        payment: accPay,
+                        principal: accPr,
+                        interest: accInt,
+                        balance: bal
                     });
-                    accPayment = accPrincipal = accInterest = 0;
+                    accPay = accPr = accInt = 0;
                 } else {
                     schedule.push({
                         month: i + 1,
                         payment: null,
                         principal: null,
                         interest: month.interest,
-                        balance: balance
+                        balance: bal
                     });
                 }
             }
             return schedule;
         }
 
-        function calcQuarterlyLinear(amount, rate, term) {
+        // CalcQuarterly_Linear - точная копия VBA функции
+        function CalcQuarterly_Linear(amount, rate, term) {
             const schedule = [];
-            const quarters = Math.ceil(term / 3);
-            const principalPerQuarter = amount / quarters;
-            let balance = amount;
+            const quarters = Math.floor((term + 2) / 3);
+            const prQuarterRaw = amount / quarters;
+            let bal = amount;
             
             for (let i = 1; i <= term; i++) {
-                const interest = balance * rate;
+                const monthInterest = bal * rate;
                 const isQuarterEnd = (i % 3 === 0) || (i === term);
                 
                 if (isQuarterEnd) {
-                    let principal = (i === term) ? balance : principalPerQuarter;
-                    const payment = principal + interest * 3;
-                    balance -= principal;
-                    if (balance < 0) balance = 0;
+                    let pr;
+                    if (i === term) {
+                        pr = bal;
+                    } else {
+                        pr = prQuarterRaw;
+                    }
+                    
+                    const payment = pr + monthInterest * 3;
+                    bal -= pr;
+                    if (bal < 0) bal = 0;
                     
                     schedule.push({
                         month: i,
                         payment: payment,
-                        principal: principal,
-                        interest: interest,
-                        balance: balance
+                        principal: pr,
+                        interest: monthInterest,
+                        balance: bal
                     });
                 } else {
                     schedule.push({
                         month: i,
                         payment: null,
                         principal: null,
-                        interest: interest,
-                        balance: balance
+                        interest: monthInterest,
+                        balance: bal
                     });
                 }
             }
             return schedule;
         }
 
-        function calcInstallmentMonthly(amount, term) {
+        // CalcInstallment_Monthly - точная копия VBA функции
+        function CalcInstallment_Monthly(amount, term) {
             const schedule = [];
-            const payment = amount / term;
-            let balance = amount;
+            const per = (term > 0) ? amount / term : 0;
+            let bal = amount;
             
             for (let i = 1; i <= term; i++) {
-                const principal = (i === term) ? balance : payment;
-                balance -= principal;
-                if (balance < 0) balance = 0;
-                
+                const principal = (i === term) ? bal : per;
+                bal -= principal;
+                if (bal < 0) bal = 0;
                 schedule.push({
                     month: i,
                     payment: principal,
                     principal: principal,
                     interest: 0,
-                    balance: balance
+                    balance: bal
                 });
             }
             return schedule;
         }
 
-        function calcInstallmentQuarterly(amount, term) {
-            const monthly = calcInstallmentMonthly(amount, term);
+        // CalcInstallment_Quarterly - точная копия VBA функции
+        function CalcInstallment_Quarterly(amount, term) {
+            const monthly = CalcInstallment_Monthly(amount, term);
             const schedule = [];
             
-            let accPayment = 0;
-            let actualBalance = amount;
-            let displayBalance = amount;
+            let accPay = 0;
+            let balFact = amount;
+            let balShow = amount;
             
             for (let i = 0; i < term; i++) {
-                accPayment += monthly[i].payment;
-                actualBalance -= monthly[i].payment;
-                if (actualBalance < 0) actualBalance = 0;
+                accPay += monthly[i].payment;
+                balFact -= monthly[i].payment;
+                if (balFact < 0) balFact = 0;
                 
                 const isQuarterEnd = ((i + 1) % 3 === 0) || (i + 1 === term);
                 
                 if (isQuarterEnd) {
-                    displayBalance = actualBalance;
+                    balShow = balFact;
                     schedule.push({
                         month: i + 1,
-                        payment: accPayment,
-                        principal: accPayment,
+                        payment: accPay,
+                        principal: accPay,
                         interest: null,
-                        balance: displayBalance
+                        balance: balShow
                     });
-                    accPayment = 0;
+                    accPay = 0;
                 } else {
                     schedule.push({
                         month: i + 1,
@@ -780,29 +836,123 @@
             return schedule;
         }
 
-        function getScheduleByType(type, amount, rate, term) {
-            switch(type) {
-                case 'annuity': return calcAnnuity(amount, rate, term);
-                case 'linear': return calcLinear(amount, rate, term);
-                case 'declining2x': return calcDeclining(amount, rate, term, 2);
-                case 'declining3x': return calcDeclining(amount, rate, term, 3);
-                case 'quarterly_annuity': return calcQuarterlyAnnuity(amount, rate, term);
-                case 'quarterly_linear': return calcQuarterlyLinear(amount, rate, term);
-                case 'installment_monthly': return calcInstallmentMonthly(amount, term);
-                case 'installment_quarterly': return calcInstallmentQuarterly(amount, term);
-                default: return calcAnnuity(amount, rate, term);
+        // ========== 3. ОСНОВНАЯ ЛОГИКА РАСЧЕТА (КАК В Build_Schedule) ==========
+
+        function Build_Schedule() {
+            try {
+                // 1. Получаем значения как в VBA
+                const totalPrice = ParseIfNumeric(document.getElementById('totalPrice').value);
+                const advancePercent = NormalizePercent(document.getElementById('advancePercent').value);
+                const term = parseInt(document.getElementById('term').value);
+                const extraPayment = ParseIfNumeric(document.getElementById('extraPayment').value);
+                const paymentType = document.getElementById('paymentType').value;
+                
+                if (term <= 0) {
+                    alert('Срок указан неверно');
+                    return;
+                }
+                
+                // 2. Расчет как в VBA (но с учетом регистрации, страховки и маржи)
+                const registrationFee = HIDDEN_ADMIN_PARAMS.registrationFee;
+                
+                // Общая стоимость = стоимость объекта + регистрация
+                const totalCost = totalPrice + registrationFee;
+                
+                // Аванс = общая стоимость * процент аванса
+                const advanceAmount = totalCost * advancePercent;
+                
+                // Сумма лизинга = общая стоимость - аванс (как leaseAmount в VBA)
+                const leaseAmount = totalCost - advanceAmount;
+                
+                // 3. Расчет эффективной ставки (как в вашем примере)
+                // В VBA используется monthlyFixed = annualFixed / 12
+                const annualFixed = HIDDEN_ADMIN_PARAMS.annualFixed; // 29.75%
+                const monthlyFixed = annualFixed / 12;
+                
+                // 4. Но нам нужно добавить страховку и маржу
+                // Страховка (0.24% от стоимости объекта)
+                const insuranceAnnual = totalPrice * HIDDEN_ADMIN_PARAMS.insuranceRate;
+                
+                // Маржа (3% от общей стоимости)
+                const marginAnnual = totalCost * HIDDEN_ADMIN_PARAMS.marginRate;
+                
+                // Ставка лизинга (29.75% от суммы лизинга)
+                const leasingAnnual = leaseAmount * annualFixed;
+                
+                // Общая годовая сумма процентов
+                const totalAnnualInterest = leasingAnnual + insuranceAnnual + marginAnnual;
+                
+                // Эффективная годовая ставка
+                const effectiveAnnualRate = totalAnnualInterest / leaseAmount;
+                
+                // Месячная ставка для расчета
+                const monthlyRateForCalc = effectiveAnnualRate / 12;
+                
+                // 5. Выбор типа графика (как в VBA Select Case)
+                let schedule = [];
+                let isRass = false;
+                
+                switch(paymentType) {
+                    case 'annuity':
+                        schedule = CalcAnnuity(leaseAmount, monthlyRateForCalc, term);
+                        break;
+                    case 'linear':
+                        schedule = CalcLinear(leaseAmount, monthlyRateForCalc, term);
+                        break;
+                    case 'declining2x':
+                        schedule = CalcDeclining_2x3x(leaseAmount, monthlyRateForCalc, term, 2);
+                        break;
+                    case 'declining3x':
+                        schedule = CalcDeclining_2x3x(leaseAmount, monthlyRateForCalc, term, 3);
+                        break;
+                    case 'quarterly_annuity':
+                        schedule = CalcQuarterly_Annuity(leaseAmount, monthlyRateForCalc, term);
+                        break;
+                    case 'quarterly_linear':
+                        schedule = CalcQuarterly_Linear(leaseAmount, monthlyRateForCalc, term);
+                        break;
+                    case 'installment_monthly':
+                        schedule = CalcInstallment_Monthly(leaseAmount, term);
+                        isRass = true;
+                        break;
+                    case 'installment_quarterly':
+                        schedule = CalcInstallment_Quarterly(leaseAmount, term);
+                        isRass = true;
+                        break;
+                    default:
+                        schedule = CalcAnnuity(leaseAmount, monthlyRateForCalc, term);
+                }
+                
+                // 6. Добавление дополнительного платежа (как в VBA)
+                if (extraPayment !== 0) {
+                    schedule.forEach(item => {
+                        if (item.payment !== null) {
+                            item.payment += extraPayment;
+                        }
+                    });
+                }
+                
+                // 7. Расчет общей переплаты (как в VBA)
+                let totalInterest = 0;
+                schedule.forEach(item => {
+                    if (item.interest !== null) totalInterest += item.interest;
+                });
+                
+                // 8. Обновление интерфейса
+                updateDisplay(leaseAmount, advanceAmount, totalInterest, schedule);
+                
+            } catch (error) {
+                alert('Ошибка расчета: ' + error.message);
             }
         }
 
-        // ========== ОСНОВНАЯ ЛОГИКА ==========
+        // ========== 4. ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ==========
         let elements = {};
 
         function initApp() {
-            // Получаем элементы
             elements = {
                 totalPrice: document.getElementById('totalPrice'),
                 advancePercent: document.getElementById('advancePercent'),
-                discount: document.getElementById('discount'),
                 term: document.getElementById('term'),
                 extraPayment: document.getElementById('extraPayment'),
                 paymentType: document.getElementById('paymentType'),
@@ -815,14 +965,9 @@
                 scheduleBody: document.getElementById('scheduleBody')
             };
             
-            // Настраиваем автоформатирование
             setupAutoFormat();
-            
-            // Назначаем обработчики
             setupEventListeners();
-            
-            // Первый расчет
-            calculateLeasing();
+            Build_Schedule();
         }
 
         function setupAutoFormat() {
@@ -847,103 +992,28 @@
         }
 
         function setupEventListeners() {
-            elements.calculateBtn.addEventListener('click', calculateLeasing);
+            elements.calculateBtn.addEventListener('click', function() {
+                elements.loader.classList.add('active');
+                setTimeout(() => {
+                    Build_Schedule();
+                    elements.loader.classList.remove('active');
+                }, 300);
+            });
             
-            ['totalPrice', 'advancePercent', 'discount', 'term', 'extraPayment', 'paymentType']
+            ['totalPrice', 'advancePercent', 'term', 'extraPayment', 'paymentType']
                 .forEach(id => {
-                    document.getElementById(id).addEventListener('change', calculateLeasing);
+                    document.getElementById(id).addEventListener('change', function() {
+                        elements.loader.classList.add('active');
+                        setTimeout(() => {
+                            Build_Schedule();
+                            elements.loader.classList.remove('active');
+                        }, 300);
+                    });
                 });
         }
 
-        function calculateLeasing() {
-            elements.loader.classList.add('active');
-            
-            setTimeout(() => {
-                try {
-                    const totalPrice = parseFormattedNumber(elements.totalPrice.value);
-                    const advancePercent = normalizePercent(elements.advancePercent.value);
-                    const discount = parseFormattedNumber(elements.discount.value);
-                    const term = parseInt(elements.term.value);
-                    const extraPayment = parseFormattedNumber(elements.extraPayment.value);
-                    const paymentType = elements.paymentType.value;
-                    
-                    // Валидация
-                    if (totalPrice <= 0 || isNaN(totalPrice)) {
-                        alert('Стоимость имущества должна быть положительным числом');
-                        return;
-                    }
-                    
-                    if (term <= 0 || isNaN(term)) {
-                        alert('Срок лизинга должен быть положительным числом');
-                        return;
-                    }
-                    
-                    // Расчет основных значений ПО ПРАВИЛЬНОЙ ЛОГИКЕ:
-                    
-                    // 1. Сумма объекта + регистрация (общая стоимость)
-                    const registrationFee = HIDDEN_ADMIN_PARAMS.registrationFee;
-                    const totalCostWithRegistration = totalPrice + registrationFee;
-                    
-                    // 2. Аванс считается от общей стоимости (объект + регистрация)
-                    const advanceAmount = totalCostWithRegistration * advancePercent;
-                    
-                    // 3. Сумма лизинга = общая стоимость - аванс
-                    const leasingAmount = totalCostWithRegistration - advanceAmount;
-                    
-                    // 4. Расчет ГОДОВЫХ процентов (не месячных!):
-                    // - Страховка (0.24%) от стоимости объекта
-                    const insuranceAnnual = totalPrice * HIDDEN_ADMIN_PARAMS.insuranceRate;
-                    
-                    // - Маржа (3%) от общей стоимости (объект + регистрация)
-                    const marginAnnual = totalCostWithRegistration * HIDDEN_ADMIN_PARAMS.marginRate;
-                    
-                    // - Ставка лизинга (29.75%) от суммы лизинга
-                    const leasingAnnual = leasingAmount * HIDDEN_ADMIN_PARAMS.leasingRate;
-                    
-                    // 5. ОБЩАЯ годовая сумма процентов
-                    const totalAnnualInterest = leasingAnnual + insuranceAnnual + marginAnnual;
-                    
-                    // 6. ВАЖНО: Расчет ПРОСТОЙ месячной ставки (не эффективной!)
-                    // Ваш пример показывает платеж 7 875 358, значит используется простая ставка
-                    // totalAnnualInterest / leasingAmount = годовая ставка
-                    // Делим на 12 для получения месячной ставки
-                    const simpleMonthlyRate = (totalAnnualInterest / leasingAmount) / 12;
-                    
-                    // 7. График платежей с ПРОСТОЙ месячной ставкой
-                    const schedule = getScheduleByType(paymentType, leasingAmount, simpleMonthlyRate, term);
-                    
-                    // 8. Дополнительный платеж
-                    if (extraPayment > 0) {
-                        schedule.forEach(item => {
-                            if (item.payment !== null) item.payment += extraPayment;
-                        });
-                    }
-                    
-                    // 9. Итоги
-                    let totalInterest = 0;
-                    let monthlyPaymentValue = 0;
-                    
-                    schedule.forEach(item => {
-                        if (item.interest !== null) totalInterest += item.interest;
-                        if (item.month === 1 && item.payment !== null) {
-                            monthlyPaymentValue = item.payment;
-                        }
-                    });
-                    
-                    // 10. Обновление интерфейса
-                    updateDisplay(leasingAmount, advanceAmount, totalInterest, monthlyPaymentValue, schedule);
-                    
-                    elements.loader.classList.remove('active');
-                    
-                } catch (error) {
-                    alert('Ошибка расчета: ' + error.message);
-                    elements.loader.classList.remove('active');
-                }
-            }, 300);
-        }
-
-        function updateDisplay(leasingAmount, advanceAmount, totalInterest, monthlyPayment, schedule) {
-            // Итоговые значения с 2 знаками после запятой
+        function updateDisplay(leasingAmount, advanceAmount, totalInterest, schedule) {
+            // Итоговые значения
             elements.leasingAmount.textContent = formatNumberWithDecimals(leasingAmount);
             elements.advanceAmount.textContent = formatNumberWithDecimals(advanceAmount);
             elements.totalOverpayment.textContent = formatNumberWithDecimals(totalInterest);

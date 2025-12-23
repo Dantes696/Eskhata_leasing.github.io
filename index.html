@@ -167,21 +167,30 @@ res.push([i,pay,pr,intr,Math.max(0,bal)]);
 return res;
 }
 
-function annuityQuarterly(a,r,t){
-  const monthly = annuity(a,r,t);
+function annuityQuarterly(a, monthlyRate, months){
+  const qRate = monthlyRate * 3;
+  const qCount = Math.ceil(months / 3);
+
+  const qPay = a * (qRate * Math.pow(1 + qRate, qCount)) /
+               (Math.pow(1 + qRate, qCount) - 1);
+
   let res = [];
   let bal = a;
+  let qIndex = 0;
 
-  for(let i=1;i<=t;i++){
-    const intr = bal * r;
+  for(let m = 1; m <= months; m++){
+    const intr = bal * monthlyRate;
 
-    if(i % 3 === 0 || i === t){
-      const pr = monthly[i-1][2];
+    if(m % 3 === 0 || m === months){
+      qIndex++;
+      let pr = qPay - intr * 3;
+      if(pr > bal) pr = bal;
+
       const pay = pr + intr;
       bal -= pr;
 
       res.push([
-        i,
+        m,
         pay,
         pr,
         intr,
@@ -189,7 +198,7 @@ function annuityQuarterly(a,r,t){
       ]);
     } else {
       res.push([
-        i,
+        m,
         null,
         null,
         intr,
@@ -199,6 +208,7 @@ function annuityQuarterly(a,r,t){
   }
   return res;
 }
+
 
 
 function declining(a,r,t,ratio){

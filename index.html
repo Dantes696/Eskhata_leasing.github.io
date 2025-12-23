@@ -32,10 +32,11 @@ width:100%;padding:12px 15px;border:2px solid #e0e0e0;border-radius:8px;font-siz
 .currency-symbol{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-weight:bold}
 .percentage-symbol{position:absolute;right:15px;top:50%;transform:translateY(-50%);font-weight:bold}
 
-.calculate-btn,.client-btn{
+.calculate-btn,.client-btn,.pdf-btn{
 width:100%;padding:16px;border:none;border-radius:10px;font-size:18px;font-weight:600;cursor:pointer;margin-bottom:10px}
 .calculate-btn{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
 .client-btn{background:#2c3e50;color:#fff}
+.pdf-btn{background:#444;color:#fff}
 
 .summary-section{background:#fff;border-radius:15px;padding:25px;margin-bottom:30px}
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
@@ -56,6 +57,20 @@ tbody tr:nth-child(even){background:#fafafa}
 .client .client-btn,
 .client .lang-switch{display:none}
 .client .container{box-shadow:none}
+
+@media print{
+body{background:#fff;padding:0}
+.container{box-shadow:none;margin:0;padding:20px;max-width:100%}
+.input-section,
+.calculate-btn,
+.client-btn,
+.pdf-btn,
+.lang-switch{display:none!important}
+.logo{height:40px}
+h1{font-size:22px}
+table{font-size:12px}
+th,td{padding:6px}
+}
 </style>
 </head>
 
@@ -100,18 +115,19 @@ tbody tr:nth-child(even){background:#fafafa}
 <div class="input-group">
 <label data-i18n="type">Тип графика</label>
 <select id="type">
-<option value="annuity">Аннуитет</option>
-<option value="annuity_q">Аннуитет (квартальный)</option>
-<option value="decl2">Убывающий 2x</option>
-<option value="decl3">Убывающий 3x</option>
-<option value="linear_q">Линейный (квартальный)</option>
-<option value="inst_m">Рассрочка ежемесячная</option>
-<option value="inst_q">Рассрочка квартальная</option>
+<option value="annuity" data-i18n="t_annuity">Аннуитет</option>
+<option value="annuity_q" data-i18n="t_annuity_q">Аннуитет (квартальный)</option>
+<option value="decl2" data-i18n="t_decl2">Убывающий 2x</option>
+<option value="decl3" data-i18n="t_decl3">Убывающий 3x</option>
+<option value="linear_q" data-i18n="t_linear">Линейный (квартальный)</option>
+<option value="inst_m" data-i18n="t_inst_m">Рассрочка ежемесячная</option>
+<option value="inst_q" data-i18n="t_inst_q">Рассрочка квартальная</option>
 </select>
 </div>
 
-<button class="calculate-btn" onclick="build()">Рассчитать</button>
-<button class="client-btn" onclick="toggleClient()">Режим для клиента</button>
+<button class="calculate-btn" onclick="build()" data-i18n="calc">Рассчитать</button>
+<button class="client-btn" onclick="toggleClient()" data-i18n="client">Режим для клиента</button>
+<button class="pdf-btn" onclick="window.print()" data-i18n="pdf">PDF / Печать</button>
 
 </div>
 
@@ -119,10 +135,19 @@ tbody tr:nth-child(even){background:#fafafa}
 
 <div class="summary-section">
 <div class="summary-grid">
-<div class="summary-item"><div class="summary-label">Долг лизинга</div><div class="summary-value" id="outLease">0</div></div>
-<div class="summary-item"><div class="summary-label">Аванс</div><div class="summary-value" id="outAdvance">0</div></div>
-<div class="summary-item"><div class="summary-label">Переплата</div><div class="summary-value" id="outOver">0</div></div>
-<div class="summary-item"><div class="summary-label">Единоразовая маржа</div><div class="summary-value" id="outMargin">0</div><div class="summary-sub" id="outMarginPct"></div></div>
+<div class="summary-item"><div class="summary-label" data-i18n="lease">Долг лизинга</div><div class="summary-value" id="outLease">0</div></div>
+<div class="summary-item"><div class="summary-label" data-i18n="adv">Аванс</div><div class="summary-value" id="outAdvance">0</div></div>
+<div class="summary-item"><div class="summary-label" data-i18n="over">Переплата</div><div class="summary-value" id="outOver">0</div></div>
+<div class="summary-item">
+  <div class="summary-label" data-i18n="margin">Единоразовая маржа</div>
+  <div class="summary-value" id="outMargin">0</div>
+  <div class="summary-sub" id="outMarginPct"></div>
+</div>
+<div class="summary-item">
+  <div class="summary-label" data-i18n="ins">Страхование</div>
+  <div class="summary-value" id="outIns">0</div>
+  <div class="summary-sub" id="outInsPct"></div>
+</div>
 </div>
 </div>
 
@@ -131,11 +156,11 @@ tbody tr:nth-child(even){background:#fafafa}
 <table>
 <thead>
 <tr>
-<th>Месяц</th>
-<th>Общая сумма оплаты</th>
-<th>Оплата основного долга</th>
-<th>Маржа лиз. компании</th>
-<th>Остаток после оплаты</th>
+<th data-i18n="m">Месяц</th>
+<th data-i18n="p">Общая сумма оплаты</th>
+<th data-i18n="pr">Оплата основного долга</th>
+<th data-i18n="i">Маржа</th>
+<th data-i18n="b">Остаток</th>
 </tr>
 </thead>
 <tbody id="tbl"></tbody>
@@ -153,6 +178,39 @@ tbody tr:nth-child(even){background:#fafafa}
 const REG=876736;
 const RATE=0.2975/12;
 const MARGIN_RATE=0.03;
+const INS_RATE=0.0024;
+
+const i18n={
+ru:{title:"Калькулятор рассрочки",price:"Стоимость объекта",advance:"Аванс (%)",term:"Срок (мес.)",
+type:"Тип графика",calc:"Рассчитать",client:"Режим для клиента",pdf:"PDF / Печать",
+lease:"Долг лизинга",adv:"Аванс",over:"Переплата",margin:"Единоразовая маржа",ins:"Страхование",
+m:"Месяц",p:"Общая сумма оплаты",pr:"Оплата основного долга",i:"Маржа",b:"Остаток",
+t_annuity:"Аннуитет",t_annuity_q:"Аннуитет (квартальный)",t_decl2:"Убывающий 2x",t_decl3:"Убывающий 3x",
+t_linear:"Линейный (квартальный)",t_inst_m:"Рассрочка ежемесячная",t_inst_q:"Рассрочка квартальная"},
+en:{title:"Installment Calculator",price:"Asset price",advance:"Advance (%)",term:"Term (months)",
+type:"Schedule type",calc:"Calculate",client:"Client mode",pdf:"PDF / Print",
+lease:"Lease balance",adv:"Advance",over:"Overpayment",margin:"One-time commission",ins:"Insurance",
+m:"Month",p:"Payment",pr:"Principal",i:"Margin",b:"Balance",
+t_annuity:"Annuity",t_annuity_q:"Quarterly annuity",t_decl2:"Declining 2x",t_decl3:"Declining 3x",
+t_linear:"Quarterly linear",t_inst_m:"Monthly installment",t_inst_q:"Quarterly installment"},
+uz:{title:"Bo‘lib to‘lash kalkulyatori",price:"Mol-mulk qiymati",advance:"Boshlang‘ich to‘lov (%)",term:"Muddati (oy)",
+type:"To‘lov jadvali",calc:"Hisoblash",client:"Mijoz rejimi",pdf:"PDF / Chop etish",
+lease:"Lizing qoldig‘i",adv:"Boshlang‘ich to‘lov",over:"Ortiqcha to‘lov",margin:"Bir martalik marja",ins:"Sug‘urta",
+m:"Oy",p:"To‘lov",pr:"Asosiy qarz",i:"Marja",b:"Qoldiq",
+t_annuity:"Annuitet",t_annuity_q:"Annuitet (choraklik)",t_decl2:"Kamayuvchi 2x",t_decl3:"Kamayuvchi 3x",
+t_linear:"Chiziqli (choraklik)",t_inst_m:"Oylik bo‘lib to‘lash",t_inst_q:"Choraklik bo‘lib to‘lash"}
+};
+
+function setLang(l){
+document.querySelectorAll('[data-i18n]').forEach(e=>{
+const k=e.dataset.i18n;
+if(i18n[l][k])e.tagName==="OPTION"?e.innerHTML=i18n[l][k]:e.textContent=i18n[l][k];
+});
+document.querySelectorAll('.lang-switch span').forEach(s=>s.classList.toggle('active',s.dataset.lang===l));
+localStorage.setItem('lang',l);
+}
+document.querySelectorAll('.lang-switch span').forEach(s=>s.onclick=()=>setLang(s.dataset.lang));
+setLang(localStorage.getItem('lang')||'ru');
 
 function n(v){return parseFloat(String(v).replace(/\s|\u00A0/g,'').replace(',','.'))||0}
 function f(x){x=Math.round(x*100)/100;let p=x.toString().split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');return p.length===1?p[0]+'.00':p[1].length===1?p[0]+'.'+p[1]+'0':p.join('.')}
@@ -167,50 +225,21 @@ res.push([i,pay,pr,intr,Math.max(0,bal)]);
 return res;
 }
 
-
-  
-function annuityQuarterly(a, r, t){
-  const base = annuity(a, r, t);
-  let res = [];
-  let bal = a;
-
-  let accPay = 0;
-  let accPr = 0;
-
-  for(let i = 1; i <= t; i++){
-    const intr = bal * r;
-    const pr = base[i-1][2];
-    const pay = base[i-1][1];
-
-    accPay += pay;
-    accPr += pr;
-
-    if(i % 3 === 0 || i === t){
-      bal -= accPr;
-
-      res.push([
-        i,
-        accPay,
-        accPr,
-        intr,
-        Math.max(0, bal)
-      ]);
-
-      accPay = 0;
-      accPr = 0;
-    } else {
-      res.push([
-        i,
-        null,
-        null,
-        intr,
-        bal
-      ]);
-    }
-  }
-  return res;
+function annuityQuarterly(a,r,t){
+const base=annuity(a,r,t);
+let res=[],bal=a,accPay=0,accPr=0;
+for(let i=1;i<=t;i++){
+const intr=bal*r;
+accPay+=base[i-1][1];
+accPr+=base[i-1][2];
+if(i%3===0||i===t){
+bal-=accPr;
+res.push([i,accPay,accPr,intr,Math.max(0,bal)]);
+accPay=0;accPr=0;
+}else res.push([i,null,null,intr,bal]);
 }
-
+return res;
+}
 
 function declining(a,r,t,ratio){
 let ann=a*(r*Math.pow(1+r,t))/(Math.pow(1+r,t)-1);
@@ -270,7 +299,12 @@ return res;
 
 function build(){
 let P=n(price.value),A=n(advance.value)/100,T=+term.value;
-let total=P+REG,adv=total*A,lease=total-adv,margin=total*MARGIN_RATE;
+let total=P+REG;
+let adv=total*A;
+let lease=total-adv;
+let margin=total*MARGIN_RATE;
+let insurance=total*INS_RATE;
+
 let sch=[];
 switch(type.value){
 case"annuity":sch=annuity(lease,RATE,T);break;
@@ -281,19 +315,32 @@ case"linear_q":sch=linearQuarterly(lease,RATE,T);break;
 case"inst_m":sch=installment(lease,T,false);break;
 case"inst_q":sch=installment(lease,T,true);break;
 }
+
 let over=0;tbl.innerHTML="";
 sch.forEach(r=>{
 if(r[3])over+=r[3];
-tbl.innerHTML+=`<tr><td>${r[0]}</td><td>${r[1]!=null?f(r[1]):'-'}</td><td>${r[2]!=null?f(r[2]):'-'}</td><td>${r[3]!=null?f(r[3]):'-'}</td><td>${r[4]!=null?f(r[4]):'-'}</td></tr>`;
+tbl.innerHTML+=`<tr>
+<td>${r[0]}</td>
+<td>${r[1]!=null?f(r[1]):'-'}</td>
+<td>${r[2]!=null?f(r[2]):'-'}</td>
+<td>${r[3]!=null?f(r[3]):'-'}</td>
+<td>${r[4]!=null?f(r[4]):'-'}</td>
+</tr>`;
 });
+
 outLease.textContent=f(lease);
 outAdvance.textContent=f(adv);
 outOver.textContent=f(over);
 outMargin.textContent=f(margin);
 outMarginPct.textContent=(MARGIN_RATE*100).toFixed(2).replace('.',',')+'%';
+outIns.textContent=f(insurance);
+outInsPct.textContent=(INS_RATE*100).toFixed(2).replace('.',',')+'%';
 }
 
-function toggleClient(){document.documentElement.classList.toggle('client')}
+function toggleClient(){
+document.documentElement.classList.toggle('client');
+}
+
 build();
 </script>
 </body>

@@ -93,7 +93,6 @@ th,td{padding:6px}
 <div class="calculator-section">
 
 <div class="input-section">
-
 <div class="input-group">
 <label data-i18n="price">Стоимость объекта</label>
 <div class="currency-input"><span class="currency-symbol">UZS</span>
@@ -128,16 +127,15 @@ th,td{padding:6px}
 <button class="calculate-btn" onclick="build()" data-i18n="calc">Рассчитать</button>
 <button class="client-btn" onclick="toggleClient()" data-i18n="client">Режим для клиента</button>
 <button class="pdf-btn" onclick="window.print()" data-i18n="pdf">PDF / Печать</button>
-
 </div>
 
 <div class="output-section">
-
 <div class="summary-section">
 <div class="summary-grid">
 <div class="summary-item"><div class="summary-label" data-i18n="lease">Долг лизинга</div><div class="summary-value" id="outLease">0</div></div>
 <div class="summary-item"><div class="summary-label" data-i18n="adv">Аванс</div><div class="summary-value" id="outAdvance">0</div></div>
 <div class="summary-item"><div class="summary-label" data-i18n="over">Переплата</div><div class="summary-value" id="outOver">0</div></div>
+<div class="summary-item"><div class="summary-label" data-i18n="total">Общая сумма оплаты</div><div class="summary-value" id="outTotal">0</div></div>
 <div class="summary-item">
   <div class="summary-label" data-i18n="margin">Единоразовая маржа</div>
   <div class="summary-value" id="outMargin">0</div>
@@ -167,10 +165,7 @@ th,td{padding:6px}
 </table>
 </div>
 </div>
-
 </div>
-</div>
-
 </div>
 </div>
 
@@ -183,19 +178,19 @@ const INS_RATE=0.0024;
 const i18n={
 ru:{title:"Калькулятор",price:"Стоимость объекта",advance:"Аванс (%)",term:"Срок (мес.)",
 type:"Тип графика",calc:"Рассчитать",client:"Режим для клиента",pdf:"PDF / Печать",
-lease:"Долг лизинга",adv:"Аванс",over:"Переплата",margin:"Единоразовая маржа",ins:"Страхование",
+lease:"Долг лизинга",adv:"Аванс",over:"Переплата",total:"Общая сумма оплаты",margin:"Единоразовая маржа",ins:"Страхование",
 m:"Месяц",p:"Общая сумма оплаты",pr:"Оплата основного долга",i:"Маржа",b:"Остаток",
 t_annuity:"Аннуитет",t_annuity_q:"Аннуитет (квартальный)",t_decl2:"Убывающий 2x",t_decl3:"Убывающий 3x",
 t_linear:"Линейный (квартальный)",t_inst_m:"Рассрочка ежемесячная",t_inst_q:"Рассрочка квартальная"},
 en:{title:"Calculator",price:"Asset price",advance:"Advance (%)",term:"Term (months)",
 type:"Schedule type",calc:"Calculate",client:"Client mode",pdf:"PDF / Print",
-lease:"Lease balance",adv:"Advance",over:"Overpayment",margin:"One-time commission",ins:"Insurance",
+lease:"Lease balance",adv:"Advance",over:"Overpayment",total:"Total payment",margin:"One-time commission",ins:"Insurance",
 m:"Month",p:"Payment",pr:"Principal",i:"Margin",b:"Balance",
 t_annuity:"Annuity",t_annuity_q:"Quarterly annuity",t_decl2:"Declining 2x",t_decl3:"Declining 3x",
 t_linear:"Quarterly linear",t_inst_m:"Monthly installment",t_inst_q:"Quarterly installment"},
 uz:{title:"Kalkulyator",price:"Mol-mulk qiymati",advance:"Boshlang‘ich to‘lov (%)",term:"Muddati (oy)",
 type:"To‘lov jadvali",calc:"Hisoblash",client:"Mijoz rejimi",pdf:"PDF / Chop etish",
-lease:"Lizing qoldig‘i",adv:"Boshlang‘ich to‘lov",over:"Ortiqcha to‘lov",margin:"Bir martalik marja",ins:"Sug‘urta",
+lease:"Lizing qoldig‘i",adv:"Boshlang‘ich to‘lov",over:"Ortiqcha to‘lov",total:"Jami to‘lov",margin:"Bir martalik marja",ins:"Sug‘urta",
 m:"Oy",p:"To‘lov",pr:"Asosiy qarz",i:"Marja",b:"Qoldiq",
 t_annuity:"Annuitet",t_annuity_q:"Annuitet (choraklik)",t_decl2:"Kamayuvchi 2x",t_decl3:"Kamayuvchi 3x",
 t_linear:"Chiziqli (choraklik)",t_inst_m:"Oylik bo‘lib to‘lash",t_inst_q:"Choraklik bo‘lib to‘lash"}
@@ -331,6 +326,7 @@ tbl.innerHTML+=`<tr>
 outLease.textContent=f(lease);
 outAdvance.textContent=f(adv);
 outOver.textContent=f(over);
+outTotal.textContent=f(lease+over);
 outMargin.textContent=f(margin);
 outMarginPct.textContent=(MARGIN_RATE*100).toFixed(2).replace('.',',')+'%';
 outIns.textContent=f(insurance);
